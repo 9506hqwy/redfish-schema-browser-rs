@@ -247,8 +247,7 @@ function getSchemaVersions(schema) {
     return window.__TAURI__.invoke('get_schema_versions', args);
 }
 
-function highlightKeyword(keyword) {
-    const content = document.querySelector('div[name="search-content"]');
+function highlightKeyword(content, keyword) {
     for (const data of content.querySelectorAll('td')) {
         if (data.innerHTML) {
             let target = data;
@@ -300,6 +299,12 @@ function refreshSchemaContent(anchor) {
                 refreshSchemaPosition();
                 refreshSchemaTable(content);
                 window.location = anchor || `#/definitions/${schemaBox.value}`
+
+                if (searchPreKeyword) {
+                    const content = document.querySelector('div[name="schema-content"]');
+                    highlightKeyword(content, searchPreKeyword);
+                }
+
                 resolve();
             })
             .catch(function(e) {
@@ -420,7 +425,9 @@ function searchKeyword(keyword) {
         searchTimer = null
         clearSearchContent();
         createSearchResultTable(resources);
-        highlightKeyword(keyword);
+
+        const content = document.querySelector('div[name="search-content"]');
+        highlightKeyword(content, keyword);
     });
 }
 
@@ -465,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (searchPreKeyword == keyword) {
             return;
         } else if (keyword.length < 3) {
+            searchPreKeyword = null;
             clearSearchContent();
             return;
         }
