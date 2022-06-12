@@ -185,8 +185,13 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let m = app.get_cli_matches()?;
-            let schemadir = m.args.get("schemadir").expect("Not found `schemadir`");
-            setup_models(schemadir.value.as_str().unwrap());
+
+            if let Some(schemadir) = m.args.get("schemadir") {
+                if let Some(path) = schemadir.value.as_str() {
+                    setup_models(path);
+                }
+            }
+
             Ok(())
         })
         .manage(CurrentPosition::default())
@@ -198,6 +203,7 @@ fn main() {
             get_schema_versions,
             reset_current_position,
             search,
+            set_schema_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -309,6 +315,11 @@ fn reset_current_position(schema: String, pos: tauri::State<CurrentPosition>) {
 fn search(keyword: &str) -> Result<Vec<SearchResourceResult>, String> {
     let regex = Regex::new(&format!("(?i){}", keyword)).unwrap();
     search_by_keyword(&regex)
+}
+
+#[tauri::command]
+fn set_schema_path(path: String) {
+    setup_models(&path);
 }
 
 fn get_schema_files(dir: &str) -> Vec<PathBuf> {

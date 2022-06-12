@@ -281,6 +281,25 @@ function linkToSchema(anchor) {
         });
 }
 
+function openDirectorySelector() {
+    const args = {
+        directory: true,
+        title: 'Select json schema directory'
+    };
+    window.__TAURI__.dialog.open(args)
+        .then(function(path) {
+            return setSchemaPath(path);
+        })
+        .then(getSchemas)
+        .then(function(schemas) {
+            return setUpSchemas(schemas)
+        })
+        .catch(function(e) {
+            console.log(e);
+            alert(e);
+        });
+}
+
 function openSearchModal() {
     console.log('open search modal');
     const searchModal = document.querySelector('div[name="search"]');
@@ -455,6 +474,31 @@ function selectVersion(version) {
     }
 }
 
+function setSchemaPath(path) {
+    console.log(`set_schema_path(${path})`);
+    const args = { 'path': path };
+    return window.__TAURI__.invoke('set_schema_path', args);
+}
+
+function setUpSchemas(schemas) {
+    const schemaBox = document.querySelector('select[name="schema-name"]');
+
+    for (const schema of schemas) {
+        const s = document.createElement('option');
+        s.text = schema;
+        s.value = schema;
+        schemaBox.appendChild(s);
+    }
+
+    selectSchema('ServiceRoot');
+
+    refreshSchemaVersion()
+        .then(refreshSchemaContent)
+        .then(function() {
+            console.log('Initialized.');
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing.');
 
@@ -497,19 +541,18 @@ document.addEventListener('DOMContentLoaded', function() {
             refreshSchemaContent();
         });
 
-        for (const schema of schemas) {
-            const s = document.createElement('option');
-            s.text = schema;
-            s.value = schema;
-            schemaBox.appendChild(s);
+        if (schemas.length > 0) {
+            setUpSchemas(schemas);
+            return;
         }
 
-        selectSchema('ServiceRoot');
+        const selectDirectory = document.querySelector('input[name="schema-select"]');
+        selectDirectory.addEventListener('click', function(e) {
+            e.preventDefault();
 
-        refreshSchemaVersion()
-            .then(refreshSchemaContent)
-            .then(function() {
-                console.log('Initialized.');
-            });
+            openDirectorySelector();
+        });
+
+        console.log('Pending.');
     });
 });

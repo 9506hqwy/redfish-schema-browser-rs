@@ -13,7 +13,9 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "dialog": {
+        "open": true
+      }
     },
     "bundle": {
       "active": false,
@@ -31,7 +33,7 @@
         {
           "name": "schemadir",
           "index": 1,
-          "required": true,
+          "required": false,
           "takesValue": true
         }
       ]
