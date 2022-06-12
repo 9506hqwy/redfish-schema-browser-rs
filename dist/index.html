@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <link rel="stylesheet" href="bulma.min.css" />
+  <link rel="stylesheet" href="index.css" />
+  <script type="text/javascript" src="index.js">
+  </script>
+  <body>
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+      <ul name="schema-position">
+      </ul>
+    </nav>
+    <div class="field is-grouped">
+      <p class="control">
+        <div class="select">
+          <select name="schema-name">
+          </select>
+        </div>
+      </p>
+      <p class-"control">
+        <div class="select">
+          <select name="schema-version">
+          </select>
+        </div>
+      </p>
+      <p class-"control">
+        <button name="search" class="button">Search</button>
+      </p>
+    </div>
+    <div name="schema-content">
+    </div>
+    <!-- search keyword -->
+    <div name="search" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Search</p>
+          <button class="delete" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="field">
+            <div class="content">
+              <input name="keyword"
+                     type="text"
+                     class="input is-rounded"
+                     placeholder="keyword... (at least 3 cahr)">
+            </div>
+          </div>
+          <div name="search-content">
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+h1 {
+    background-color: darkseagreen;
+}
+
+div.modal-card {
+    width: 90%;
+    height: 90%;
+}
+
+span.keyword {
+    background-color: yellow;;
+}
