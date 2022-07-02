@@ -1,3 +1,6 @@
+import { open } from '@tauri-apps/api/dialog';
+import { invoke } from '@tauri-apps/api/tauri';
+
 var searchPreKeyword = null;
 var searchTimer = null;
 
@@ -214,25 +217,25 @@ function createSchemaModelTable(modelName, properties) {
 
 function getCurrentPosition() {
     console.log('get_current_position');
-    return window.__TAURI__.invoke('get_current_position');
+    return invoke('get_current_position');
 }
 
 function getSchemas() {
     console.log('get_schemas');
-    return window.__TAURI__.invoke('get_schemas');
+    return invoke('get_schemas');
 }
 
 function getSchemaByUrl(link) {
     console.log(`get_schema_by_url(${link})`);
     const args = { 'link': link };
-    return window.__TAURI__.invoke('get_schema_by_url', args);
+    return invoke('get_schema_by_url', args);
 }
 
 function getSchemaContent(schema, version) {
     console.log(`get_schema_content(${schema}, ${version})`);
     const proc = new Promise(function(resolve, reject) {
         const args = { 'schema': schema, 'version': version };
-        window.__TAURI__.invoke('get_schema_content', args)
+        invoke('get_schema_content', args)
             .then(function(content) {
                 resolve(JSON.parse(content));
             })
@@ -244,7 +247,7 @@ function getSchemaContent(schema, version) {
 function getSchemaVersions(schema) {
     console.log(`get_schemaversions(${schema})`);
     const args = { 'schema': schema };
-    return window.__TAURI__.invoke('get_schema_versions', args);
+    return invoke('get_schema_versions', args);
 }
 
 function highlightKeyword(content, keyword) {
@@ -286,7 +289,7 @@ function openDirectorySelector() {
         directory: true,
         title: 'Select json schema directory'
     };
-    window.__TAURI__.dialog.open(args)
+    open(args)
         .then(function(path) {
             return setSchemaPath(path);
         })
@@ -429,13 +432,13 @@ function refreshSchemaVersion() {
 function resetCurrentPosition(schema) {
     console.log(`reset_current_position(${schema})`);
     const args = { 'schema': schema };
-    return window.__TAURI__.invoke('reset_current_position', args);
+    return invoke('reset_current_position', args);
 }
 
 function search(keyword) {
     console.log(`search(${keyword})`);
     const args = { 'keyword': keyword };
-    return window.__TAURI__.invoke('search', args);
+    return invoke('search', args);
 }
 
 function searchKeyword(keyword) {
@@ -477,7 +480,7 @@ function selectVersion(version) {
 function setSchemaPath(path) {
     console.log(`set_schema_path(${path})`);
     const args = { 'path': path };
-    return window.__TAURI__.invoke('set_schema_path', args);
+    return invoke('set_schema_path', args);
 }
 
 function setUpSchemas(schemas) {
