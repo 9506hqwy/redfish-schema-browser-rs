@@ -2,7 +2,7 @@
   "name": "redfish-schema-browser",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
   },
@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.0.0",
+    "typescript": "^4.5.4",
     "vite": "^2.9.9"
   }
 }

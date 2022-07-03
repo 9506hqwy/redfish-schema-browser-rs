@@ -1,11 +1,13 @@
 import { open } from '@tauri-apps/api/dialog';
 import { invoke } from '@tauri-apps/api/tauri';
+import './bulma.min.css';
+import './index.css';
 
-var searchPreKeyword = null;
-var searchTimer = null;
+var searchPreKeyword: (string | null) = null;
+var searchTimer: (number | null) = null;
 
 function clearSearchContent() {
-    const content = document.querySelector('div[name="search-content"]');
+    const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
 
     while(content.firstChild) {
         content.removeChild(content.firstChild);
@@ -14,11 +16,11 @@ function clearSearchContent() {
 
 function closeSearchModal() {
     console.log('close search modal');
-    const searchModal = document.querySelector('div[name="search"]');
+    const searchModal = document.querySelector<HTMLDivElement>('div[name="search"]')!;
     searchModal.classList.remove('is-active');
 }
 
-function createAnchor(text, href) {
+function createAnchor(text: string, href: string): HTMLAnchorElement {
     let anchor = document.createElement('a');
     anchor.href = href;
     anchor.title = href;
@@ -27,14 +29,14 @@ function createAnchor(text, href) {
     if (!isInnerLink(anchor)) {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-            linkToSchema(e.target);
+            linkToSchema(e.target as HTMLAnchorElement);
         });
     }
 
     return anchor;
 }
 
-function createSearchResultTable(resources) {
+function createSearchResultTable(resources: any[]) {
     const table = document.createElement('table');
     table.classList.add('table');
     table.classList.add('is-fullwidth');
@@ -65,11 +67,11 @@ function createSearchResultTable(resources) {
         }
     }
 
-    const content = document.querySelector('div[name="search-content"]');
+    const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
     content.appendChild(table);
 }
 
-function createSchemaEnumTable(definition) {
+function createSchemaEnumTable(definition: any): HTMLTableElement {
     const tbody = document.createElement('tbody');
 
     for (const value of definition.enum) {
@@ -132,7 +134,7 @@ function createSchemaEnumTable(definition) {
     return table;
 }
 
-function createSchemaModelTable(modelName, properties) {
+function createSchemaModelTable(modelName: string, properties: any): HTMLTableElement {
     const tbody = document.createElement('tbody');
 
     for (const name in properties) {
@@ -215,47 +217,47 @@ function createSchemaModelTable(modelName, properties) {
     return table;
 }
 
-function getCurrentPosition() {
+function getCurrentPosition(): Promise<unknown> {
     console.log('get_current_position');
     return invoke('get_current_position');
 }
 
-function getSchemas() {
+function getSchemas(): Promise<string[]> {
     console.log('get_schemas');
     return invoke('get_schemas');
 }
 
-function getSchemaByUrl(link) {
+function getSchemaByUrl(link: string): Promise<unknown> {
     console.log(`get_schema_by_url(${link})`);
     const args = { 'link': link };
     return invoke('get_schema_by_url', args);
 }
 
-function getSchemaContent(schema, version) {
+function getSchemaContent(schema: string, version: string): Promise<unknown> {
     console.log(`get_schema_content(${schema}, ${version})`);
     const proc = new Promise(function(resolve, reject) {
         const args = { 'schema': schema, 'version': version };
         invoke('get_schema_content', args)
-            .then(function(content) {
-                resolve(JSON.parse(content));
+            .then(function(content: unknown) {
+                resolve(JSON.parse(content as string));
             })
             .catch(reject);
     });
     return proc;
 }
 
-function getSchemaVersions(schema) {
+function getSchemaVersions(schema: string): Promise<string[]> {
     console.log(`get_schemaversions(${schema})`);
     const args = { 'schema': schema };
     return invoke('get_schema_versions', args);
 }
 
-function highlightKeyword(content, keyword) {
-    for (const data of content.querySelectorAll('td')) {
+function highlightKeyword(content: HTMLElement, keyword: string) {
+    for (const data of content.querySelectorAll<HTMLTableCellElement>('td')!) {
         if (data.innerHTML) {
-            let target = data;
-            if (data.firstChild.nodeType != Node.TEXT_NODE) {
-                target = data.firstChild;
+            let target = data as HTMLElement;
+            if (data.firstChild!.nodeType != Node.TEXT_NODE) {
+                target = data.firstChild! as HTMLElement;
             }
 
             const regex = new RegExp(keyword, 'gi');
@@ -264,13 +266,13 @@ function highlightKeyword(content, keyword) {
     }
 }
 
-function isInnerLink(atag) {
+function isInnerLink(atag: HTMLAnchorElement): boolean {
     return atag.protocol != 'http:';
 }
 
-function linkToSchema(anchor) {
+function linkToSchema(anchor: HTMLAnchorElement) {
     getSchemaByUrl(anchor.href)
-        .then(function(model) {
+        .then(function(model: any) {
             selectSchema(model.resource);
             refreshSchemaVersion().then(function() {
                 selectVersion(model.version);
@@ -290,11 +292,11 @@ function openDirectorySelector() {
         title: 'Select json schema directory'
     };
     open(args)
-        .then(function(path) {
-            return setSchemaPath(path);
+        .then(function(path: (string | string[] | null)) {
+            return setSchemaPath(path as string);
         })
         .then(getSchemas)
-        .then(function(schemas) {
+        .then(function(schemas: string[]) {
             return setUpSchemas(schemas)
         })
         .catch(function(e) {
@@ -305,29 +307,29 @@ function openDirectorySelector() {
 
 function openSearchModal() {
     console.log('open search modal');
-    const searchModal = document.querySelector('div[name="search"]');
+    const searchModal = document.querySelector<HTMLDivElement>('div[name="search"]')!;
     searchModal.classList.add('is-active');
 
-    const searchKeywordInput = searchModal.querySelector('input[name="keyword"]');
+    const searchKeywordInput = searchModal.querySelector<HTMLInputElement>('input[name="keyword"]')!;
     searchKeywordInput.focus();
 }
 
-function refreshSchemaContent(anchor) {
+function refreshSchemaContent(anchor?: string): Promise<unknown> {
     const proc = new Promise(function(resolve, reject) {
-        const schemaBox = document.querySelector('select[name="schema-name"]');
-        const versionBox = document.querySelector('select[name="schema-version"]');
+        const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
+        const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
         getSchemaContent(schemaBox.value, versionBox.value)
             .then(function(content) {
                 refreshSchemaPosition();
                 refreshSchemaTable(content);
-                window.location = anchor || `#/definitions/${schemaBox.value}`
+                window.location.href = anchor || `#/definitions/${schemaBox.value}`
 
                 if (searchPreKeyword) {
-                    const content = document.querySelector('div[name="schema-content"]');
+                    const content = document.querySelector<HTMLDivElement>('div[name="schema-content"]')!;
                     highlightKeyword(content, searchPreKeyword);
                 }
 
-                resolve();
+                resolve(content);
             })
             .catch(function(e) {
                 console.log(e);
@@ -338,8 +340,8 @@ function refreshSchemaContent(anchor) {
 }
 
 function refreshSchemaPosition() {
-    getCurrentPosition().then(function(models) {
-        const breadcrumb = document.querySelector('ul[name="schema-position"]');
+    getCurrentPosition().then(function(models: any) {
+        const breadcrumb = document.querySelector<HTMLUListElement>('ul[name="schema-position"]')!;
 
         while (breadcrumb.firstChild) {
             breadcrumb.removeChild(breadcrumb.firstChild);
@@ -356,8 +358,8 @@ function refreshSchemaPosition() {
     });
 }
 
-function refreshSchemaTable(content) {
-    const schemaContent = document.querySelector('div[name="schema-content"]');
+function refreshSchemaTable(content: any) {
+    const schemaContent = document.querySelector<HTMLDivElement>('div[name="schema-content"]')!;
 
     while(schemaContent.firstChild) {
         schemaContent.removeChild(schemaContent.firstChild);
@@ -403,10 +405,10 @@ function refreshSchemaTable(content) {
 
 function refreshSchemaVersion() {
     const proc = new Promise(function(resolve, reject) {
-        const schemaBox = document.querySelector('select[name="schema-name"]');
+        const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
         getSchemaVersions(schemaBox.value)
             .then(function(versions) {
-                const versionBox = document.querySelector('select[name="schema-version"]');
+                const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
 
                 while (versionBox.firstChild) {
                     versionBox.removeChild(versionBox.firstChild);
@@ -419,7 +421,7 @@ function refreshSchemaVersion() {
                     versionBox.appendChild(v);
                 }
 
-                resolve();
+                resolve(versions);
             })
             .catch(function(e) {
                 console.log(e);
@@ -429,33 +431,33 @@ function refreshSchemaVersion() {
     return proc;
 }
 
-function resetCurrentPosition(schema) {
+function resetCurrentPosition(schema: string) {
     console.log(`reset_current_position(${schema})`);
     const args = { 'schema': schema };
     return invoke('reset_current_position', args);
 }
 
-function search(keyword) {
+function search(keyword: string): Promise<unknown[]> {
     console.log(`search(${keyword})`);
     const args = { 'keyword': keyword };
     return invoke('search', args);
 }
 
-function searchKeyword(keyword) {
+function searchKeyword(keyword: string) {
     searchPreKeyword = keyword;
     search(keyword).then(function(resources) {
         searchTimer = null
         clearSearchContent();
         createSearchResultTable(resources);
 
-        const content = document.querySelector('div[name="search-content"]');
+        const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
         highlightKeyword(content, keyword);
     });
 }
 
-function selectSchema(schema) {
-    const schemaBox = document.querySelector('select[name="schema-name"]');
-    const options = schemaBox.querySelectorAll('option');
+function selectSchema(schema: string) {
+    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
+    const options = schemaBox.querySelectorAll<HTMLOptionElement>('option')!;
     for (const option of options) {
         if (option.value == schema) {
             option.selected = true;
@@ -465,9 +467,9 @@ function selectSchema(schema) {
     }
 }
 
-function selectVersion(version) {
-    const versionBox = document.querySelector('select[name="schema-version"]');
-    const options = versionBox.querySelectorAll('option');
+function selectVersion(version: string) {
+    const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
+    const options = versionBox.querySelectorAll<HTMLOptionElement>('option')!;
     for (const option of options) {
         if (option.value == version) {
             option.selected = true;
@@ -477,14 +479,14 @@ function selectVersion(version) {
     }
 }
 
-function setSchemaPath(path) {
+function setSchemaPath(path: string) {
     console.log(`set_schema_path(${path})`);
     const args = { 'path': path };
     return invoke('set_schema_path', args);
 }
 
-function setUpSchemas(schemas) {
-    const schemaBox = document.querySelector('select[name="schema-name"]');
+function setUpSchemas(schemas: string[]) {
+    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
 
     for (const schema of schemas) {
         const s = document.createElement('option');
@@ -496,7 +498,7 @@ function setUpSchemas(schemas) {
     selectSchema('ServiceRoot');
 
     refreshSchemaVersion()
-        .then(refreshSchemaContent)
+        .then(_ => refreshSchemaContent())
         .then(function() {
             console.log('Initialized.');
         });
@@ -505,17 +507,17 @@ function setUpSchemas(schemas) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing.');
 
-    const searchButton = document.querySelector('button[name="search"]');
+    const searchButton = document.querySelector<HTMLButtonElement>('button[name="search"]')!;
     searchButton.addEventListener('click', openSearchModal);
 
-    const searchCloseButton = document.querySelector('div[name="search"] button.delete');
+    const searchCloseButton = document.querySelector<HTMLDivElement>('div[name="search"] button.delete')!;
     searchCloseButton.addEventListener('click', closeSearchModal);
 
-    const searchKeywordInput = document.querySelector('div[name="search"] input[name="keyword"]');
+    const searchKeywordInput = document.querySelector<HTMLInputElement>('div[name="search"] input[name="keyword"]')!;
     searchKeywordInput.addEventListener('keyup', function(e) {
         e.stopPropagation();
 
-        let keyword = e.target.value;
+        let keyword = (e.target as HTMLInputElement)!.value;
         if (searchPreKeyword == keyword) {
             return;
         } else if (keyword.length < 3) {
@@ -531,15 +533,15 @@ document.addEventListener('DOMContentLoaded', function() {
         searchTimer = setTimeout(function () { searchKeyword(keyword); }, 300);
     });
 
-    getSchemas().then(function(schemas) {
-        const schemaBox = document.querySelector('select[name="schema-name"]');
+    getSchemas().then(function(schemas: string[]) {
+        const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
         schemaBox.addEventListener('change', function(e) {
-            resetCurrentPosition(e.target.value)
+            resetCurrentPosition((e.target as HTMLSelectElement)!.value)
                 .then(refreshSchemaVersion)
-                .then(refreshSchemaContent);
+                .then(_ => refreshSchemaContent());
         });
 
-        const versionBox = document.querySelector('select[name="schema-version"]');
+        const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
         versionBox.addEventListener('change', function() {
             refreshSchemaContent();
         });
@@ -549,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const selectDirectory = document.querySelector('input[name="schema-select"]');
+        const selectDirectory = document.querySelector<HTMLInputElement>('input[name="schema-select"]')!;
         selectDirectory.addEventListener('click', function(e) {
             e.preventDefault();
 
