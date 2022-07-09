@@ -233,17 +233,11 @@ function getSchemaByUrl(link: string): Promise<unknown> {
     return invoke('get_schema_by_url', args);
 }
 
-function getSchemaContent(schema: string, version: string): Promise<unknown> {
+async function getSchemaContent(schema: string, version: string): Promise<unknown> {
     console.log(`get_schema_content(${schema}, ${version})`);
-    const proc = new Promise(function(resolve, reject) {
-        const args = { 'schema': schema, 'version': version };
-        invoke('get_schema_content', args)
-            .then(function(content: unknown) {
-                resolve(JSON.parse(content as string));
-            })
-            .catch(reject);
-    });
-    return proc;
+    const args = { 'schema': schema, 'version': version };
+    const content = await invoke('get_schema_content', args);
+    return JSON.parse(content as string);
 }
 
 function getSchemaVersions(schema: string): Promise<string[]> {
@@ -270,39 +264,29 @@ function isInnerLink(atag: HTMLAnchorElement): boolean {
     return atag.protocol != 'http:';
 }
 
-function linkToSchema(anchor: HTMLAnchorElement) {
-    getSchemaByUrl(anchor.href)
-        .then(function(model: any) {
-            selectSchema(model.resource);
-            refreshSchemaVersion().then(function() {
-                selectVersion(model.version);
-                const anchor = model.fragment && `#${model.fragment}`;
-                refreshSchemaContent(anchor);
-            });
-        })
-        .catch(function(e) {
-            console.log(e);
-            alert(e);
-        });
+async function linkToSchema(anchor: HTMLAnchorElement): Promise<void> {
+    const model = await getSchemaByUrl(anchor.href) as any;
+    selectSchema(model.resource);
+
+    await refreshSchemaVersion();
+    selectVersion(model.version);
+
+    const flag = model.fragment && `#${model.fragment}`;
+    await refreshSchemaContent(flag);
 }
 
-function openDirectorySelector() {
+async function openDirectorySelector(): Promise<void> {
     const args = {
         directory: true,
         title: 'Select json schema directory'
     };
-    open(args)
-        .then(function(path: (string | string[] | null)) {
-            return setSchemaPath(path as string);
-        })
-        .then(getSchemas)
-        .then(function(schemas: string[]) {
-            return setUpSchemas(schemas)
-        })
-        .catch(function(e) {
-            console.log(e);
-            alert(e);
-        });
+    const path = await open(args);
+
+    await setSchemaPath(path as string);
+
+    const schemas = await getSchemas();
+
+    await setUpSchemas(schemas);
 }
 
 function openSearchModal() {
@@ -314,48 +298,38 @@ function openSearchModal() {
     searchKeywordInput.focus();
 }
 
-function refreshSchemaContent(anchor?: string): Promise<unknown> {
-    const proc = new Promise(function(resolve, reject) {
-        const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
-        const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
-        getSchemaContent(schemaBox.value, versionBox.value)
-            .then(function(content) {
-                refreshSchemaPosition();
-                refreshSchemaTable(content);
-                window.location.href = anchor || `#/definitions/${schemaBox.value}`
+async function refreshSchemaContent(anchor?: string): Promise<unknown> {
+    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
+    const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
+    const content = await getSchemaContent(schemaBox.value, versionBox.value);
+    await refreshSchemaPosition();
+    refreshSchemaTable(content);
+    window.location.href = anchor || `#/definitions/${schemaBox.value}`
 
-                if (searchPreKeyword) {
-                    const content = document.querySelector<HTMLDivElement>('div[name="schema-content"]')!;
-                    highlightKeyword(content, searchPreKeyword);
-                }
+    if (searchPreKeyword) {
+        const content = document.querySelector<HTMLDivElement>('div[name="schema-content"]')!;
+        highlightKeyword(content, searchPreKeyword);
+    }
 
-                resolve(content);
-            })
-            .catch(function(e) {
-                console.log(e);
-                reject(e);
-            });
-    });
-    return proc;
+    return content;
 }
 
-function refreshSchemaPosition() {
-    getCurrentPosition().then(function(models: any) {
-        const breadcrumb = document.querySelector<HTMLUListElement>('ul[name="schema-position"]')!;
+async function refreshSchemaPosition(): Promise<void> {
+    const models = await getCurrentPosition() as any;
+    const breadcrumb = document.querySelector<HTMLUListElement>('ul[name="schema-position"]')!;
 
-        while (breadcrumb.firstChild) {
-            breadcrumb.removeChild(breadcrumb.firstChild);
-        }
+    while (breadcrumb.firstChild) {
+        breadcrumb.removeChild(breadcrumb.firstChild);
+    }
 
-        for (const model of models) {
-            let anchor = createAnchor(model.resource, model.link);
+    for (const model of models) {
+        let anchor = createAnchor(model.resource, model.link);
 
-            let li = document.createElement('li');
-            li.appendChild(anchor);
+        let li = document.createElement('li');
+        li.appendChild(anchor);
 
-            breadcrumb.appendChild(li);
-        }
-    });
+        breadcrumb.appendChild(li);
+    }
 }
 
 function refreshSchemaTable(content: any) {
@@ -403,32 +377,21 @@ function refreshSchemaTable(content: any) {
     }
 }
 
-function refreshSchemaVersion() {
-    const proc = new Promise(function(resolve, reject) {
-        const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
-        getSchemaVersions(schemaBox.value)
-            .then(function(versions) {
-                const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
+async function refreshSchemaVersion(): Promise<void> {
+    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
+    const versions = await getSchemaVersions(schemaBox.value);
+    const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
 
-                while (versionBox.firstChild) {
-                    versionBox.removeChild(versionBox.firstChild);
-                }
+    while (versionBox.firstChild) {
+        versionBox.removeChild(versionBox.firstChild);
+    }
 
-                for (const version of versions) {
-                    const v = document.createElement('option');
-                    v.text = version;
-                    v.value = version;
-                    versionBox.appendChild(v);
-                }
-
-                resolve(versions);
-            })
-            .catch(function(e) {
-                console.log(e);
-                reject(e);
-            });
-    });
-    return proc;
+    for (const version of versions) {
+        const v = document.createElement('option');
+        v.text = version;
+        v.value = version;
+        versionBox.appendChild(v);
+    }
 }
 
 function resetCurrentPosition(schema: string) {
@@ -443,16 +406,15 @@ function search(keyword: string): Promise<unknown[]> {
     return invoke('search', args);
 }
 
-function searchKeyword(keyword: string) {
+async function searchKeyword(keyword: string): Promise<void> {
     searchPreKeyword = keyword;
-    search(keyword).then(function(resources) {
-        searchTimer = null
-        clearSearchContent();
-        createSearchResultTable(resources);
+    let resources = await search(keyword);
+    searchTimer = null
+    clearSearchContent();
+    createSearchResultTable(resources);
 
-        const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
-        highlightKeyword(content, keyword);
-    });
+    const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
+    highlightKeyword(content, keyword);
 }
 
 function selectSchema(schema: string) {
@@ -485,7 +447,7 @@ function setSchemaPath(path: string) {
     return invoke('set_schema_path', args);
 }
 
-function setUpSchemas(schemas: string[]) {
+async function setUpSchemas(schemas: string[]): Promise<void> {
     const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
 
     for (const schema of schemas) {
@@ -497,11 +459,9 @@ function setUpSchemas(schemas: string[]) {
 
     selectSchema('ServiceRoot');
 
-    refreshSchemaVersion()
-        .then(_ => refreshSchemaContent())
-        .then(function() {
-            console.log('Initialized.');
-        });
+    await refreshSchemaVersion();
+    await refreshSchemaContent();
+    console.log('Initialized.');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
