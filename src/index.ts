@@ -261,7 +261,7 @@ function highlightKeyword(content: HTMLElement, keyword: string) {
 }
 
 function isInnerLink(atag: HTMLAnchorElement): boolean {
-    return atag.protocol != 'http:';
+    return atag.hostname == 'localhost';
 }
 
 async function linkToSchema(anchor: HTMLAnchorElement): Promise<void> {
