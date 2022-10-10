@@ -1,221 +1,18 @@
 import { open } from '@tauri-apps/api/dialog';
 import { invoke } from '@tauri-apps/api/tauri';
+import { LitElement, html, unsafeCSS } from 'lit';
+import { customElement, property, query } from 'lit/decorators.js';
+import { DirectiveResult } from 'lit/directive.js';
+import { unsafeHTML, UnsafeHTMLDirective } from 'lit/directives/unsafe-html.js';
 import './bulma.min.css';
 import './index.css';
+import bulmaStyles from './bulma.min.css';
+import indexStyles from './index.css';
 
-var searchPreKeyword: (string | null) = null;
-var searchTimer: (number | null) = null;
-
-function clearSearchContent() {
-    const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
-
-    while(content.firstChild) {
-        content.removeChild(content.firstChild);
-    }
-}
-
-function closeSearchModal() {
-    console.log('close search modal');
-    const searchModal = document.querySelector<HTMLDivElement>('div[name="search"]')!;
-    searchModal.classList.remove('is-active');
-}
-
-function createAnchor(text: string, href: string): HTMLAnchorElement {
-    let anchor = document.createElement('a');
-    anchor.href = href;
-    anchor.title = href;
-    anchor.appendChild(document.createTextNode(text));
-
-    if (!isInnerLink(anchor)) {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            linkToSchema(e.target as HTMLAnchorElement);
-        });
-    }
-
-    return anchor;
-}
-
-function createSearchResultTable(resources: any[]) {
-    const table = document.createElement('table');
-    table.classList.add('table');
-    table.classList.add('is-fullwidth');
-    table.classList.add('is-hoverable');
-
-    for (const resource of resources) {
-        for (const property of resource.properties) {
-            const row = document.createElement('tr');
-
-            const name = `${resource.name}.json#/definitions/${resource.model}.${property.name}`;
-            const url = `http://redfish.dmtf.org/schemas/v1/${name}`
-            const link = createAnchor(name, url);
-            // TODO: clear breadcrumbs.
-            link.addEventListener('click', closeSearchModal);
-            const nameCell = document.createElement('td');
-            nameCell.appendChild(link);
-            row.appendChild(nameCell);
-
-            let value = '';
-            if (property.value) {
-                value = property.value.content;
-            }
-            const valueCell = document.createElement('td');
-            valueCell.appendChild(document.createTextNode(value));
-            row.appendChild(valueCell);
-
-            table.appendChild(row);
-        }
-    }
-
-    const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
-    content.appendChild(table);
-}
-
-function createSchemaEnumTable(definition: any): HTMLTableElement {
-    const tbody = document.createElement('tbody');
-
-    for (const value of definition.enum) {
-        const valueCell = document.createElement('td');
-        valueCell.appendChild(document.createTextNode(value));
-
-        const descCell = document.createElement('td');
-        const longDescription = definition.enumLongDescriptions && definition.enumLongDescriptions[value];
-        const description = definition.enumDescriptions && definition.enumDescriptions[value];
-        const descText = longDescription || description || '';
-        descCell.appendChild(document.createTextNode(descText));
-
-        const verAddCell = document.createElement('td');
-        const versionAdded = definition.enumVersionAdded && definition.enumVersionAdded[value];
-        const verAddText = versionAdded || '';
-        verAddCell.appendChild(document.createTextNode(verAddText));
-
-        const typeCell = document.createElement('td');
-        const typeText = definition.type || '';
-        typeCell.appendChild(document.createTextNode(typeText));
-
-        const row = document.createElement('tr');
-        row.appendChild(valueCell);
-        row.appendChild(descCell);
-        row.appendChild(verAddCell);
-        row.appendChild(typeCell);
-
-        tbody.appendChild(row);
-    }
-
-    const valueHeader = document.createElement('th');
-    valueHeader.appendChild(document.createTextNode('value'));
-
-    const descHeader = document.createElement('th');
-    descHeader.appendChild(document.createTextNode('description'));
-
-    const verAddHeader = document.createElement('th');
-    verAddHeader.appendChild(document.createTextNode('version added'));
-
-    const typeHeader = document.createElement('th');
-    typeHeader.appendChild(document.createTextNode('type'));
-
-
-    const hrow = document.createElement('tr');
-    hrow.appendChild(valueHeader);
-    hrow.appendChild(descHeader);
-    hrow.appendChild(verAddHeader);
-    hrow.appendChild(typeHeader);
-
-    const thead = document.createElement('thead');
-    thead.appendChild(hrow);
-
-    const table = document.createElement('table');
-    table.classList.add('table');
-    table.classList.add('is-fullwidth');
-    table.classList.add('is-hoverable');
-    table.appendChild(thead);
-    table.appendChild(tbody);
-
-    return table;
-}
-
-function createSchemaModelTable(modelName: string, properties: any): HTMLTableElement {
-    const tbody = document.createElement('tbody');
-
-    for (const name in properties) {
-        const property = properties[name];
-
-        let href = property['$ref'];
-        if (!href) {
-            if (property.items) {
-                href = property.items['$ref'];
-            } else if (property.anyOf) {
-                for (const i of property.anyOf) {
-                    href = i['$ref'];
-                    if (href) {
-                        // TODO: first element only.
-                        break;
-                    }
-                }
-            }
-        }
-
-        const nameCell = document.createElement('td');
-        if (href) {
-            let anchor = createAnchor(name, href);
-            nameCell.appendChild(anchor);
-        } else {
-            nameCell.appendChild(document.createTextNode(name));
-        }
-
-        const descCell = document.createElement('td');
-        const descText = property.longDescription || property.description || '';
-        descCell.appendChild(document.createTextNode(descText));
-
-        const verAddCell = document.createElement('td');
-        const verAddText = property.versionAdded || '';
-        verAddCell.appendChild(document.createTextNode(verAddText));
-
-        const typeCell = document.createElement('td');
-        const typeText = property.type || '';
-        typeCell.appendChild(document.createTextNode(typeText));
-
-        const row = document.createElement('tr');
-        row.id = `/definitions/${modelName}.${name}`
-        row.appendChild(nameCell);
-        row.appendChild(descCell);
-        row.appendChild(verAddCell);
-        row.appendChild(typeCell);
-
-        tbody.appendChild(row);
-    }
-
-    const nameHeader = document.createElement('th');
-    nameHeader.appendChild(document.createTextNode('property name'));
-
-    const descHeader = document.createElement('th');
-    descHeader.appendChild(document.createTextNode('description'));
-
-    const verAddHeader = document.createElement('th');
-    verAddHeader.appendChild(document.createTextNode('version added'));
-
-    const typeHeader = document.createElement('th');
-    typeHeader.appendChild(document.createTextNode('type'));
-
-
-    const hrow = document.createElement('tr');
-    hrow.appendChild(nameHeader);
-    hrow.appendChild(descHeader);
-    hrow.appendChild(verAddHeader);
-    hrow.appendChild(typeHeader);
-
-    const thead = document.createElement('thead');
-    thead.appendChild(hrow);
-
-    const table = document.createElement('table');
-    table.classList.add('table');
-    table.classList.add('is-fullwidth');
-    table.classList.add('is-hoverable');
-    table.appendChild(thead);
-    table.appendChild(tbody);
-
-    return table;
-}
+const globalStyles = [
+    unsafeCSS(bulmaStyles),
+    unsafeCSS(indexStyles)
+];
 
 function getCurrentPosition(): Promise<unknown> {
     console.log('get_current_position');
@@ -246,154 +43,6 @@ function getSchemaVersions(schema: string): Promise<string[]> {
     return invoke('get_schema_versions', args);
 }
 
-function highlightKeyword(content: HTMLElement, keyword: string) {
-    for (const data of content.querySelectorAll<HTMLTableCellElement>('td')!) {
-        if (data.innerHTML) {
-            let target = data as HTMLElement;
-            if (data.firstChild!.nodeType != Node.TEXT_NODE) {
-                target = data.firstChild! as HTMLElement;
-            }
-
-            const regex = new RegExp(keyword, 'gi');
-            target.innerHTML = target.innerHTML.replace(regex, '<span class="keyword">$&</span>');
-        }
-    }
-}
-
-function isInnerLink(atag: HTMLAnchorElement): boolean {
-    return atag.hostname == 'localhost';
-}
-
-async function linkToSchema(anchor: HTMLAnchorElement): Promise<void> {
-    const model = await getSchemaByUrl(anchor.href) as any;
-    selectSchema(model.resource);
-
-    await refreshSchemaVersion();
-    selectVersion(model.version);
-
-    const flag = model.fragment && `#${model.fragment}`;
-    await refreshSchemaContent(flag);
-}
-
-async function openDirectorySelector(): Promise<void> {
-    const args = {
-        directory: true,
-        title: 'Select json schema directory'
-    };
-    const path = await open(args);
-
-    await setSchemaPath(path as string);
-
-    const schemas = await getSchemas();
-
-    await setUpSchemas(schemas);
-}
-
-function openSearchModal() {
-    console.log('open search modal');
-    const searchModal = document.querySelector<HTMLDivElement>('div[name="search"]')!;
-    searchModal.classList.add('is-active');
-
-    const searchKeywordInput = searchModal.querySelector<HTMLInputElement>('input[name="keyword"]')!;
-    searchKeywordInput.focus();
-}
-
-async function refreshSchemaContent(anchor?: string): Promise<unknown> {
-    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
-    const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
-    const content = await getSchemaContent(schemaBox.value, versionBox.value);
-    await refreshSchemaPosition();
-    refreshSchemaTable(content);
-    window.location.href = anchor || `#/definitions/${schemaBox.value}`
-
-    if (searchPreKeyword) {
-        const content = document.querySelector<HTMLDivElement>('div[name="schema-content"]')!;
-        highlightKeyword(content, searchPreKeyword);
-    }
-
-    return content;
-}
-
-async function refreshSchemaPosition(): Promise<void> {
-    const models = await getCurrentPosition() as any;
-    const breadcrumb = document.querySelector<HTMLUListElement>('ul[name="schema-position"]')!;
-
-    while (breadcrumb.firstChild) {
-        breadcrumb.removeChild(breadcrumb.firstChild);
-    }
-
-    for (const model of models) {
-        let anchor = createAnchor(model.resource, model.link);
-
-        let li = document.createElement('li');
-        li.appendChild(anchor);
-
-        breadcrumb.appendChild(li);
-    }
-}
-
-function refreshSchemaTable(content: any) {
-    const schemaContent = document.querySelector<HTMLDivElement>('div[name="schema-content"]')!;
-
-    while(schemaContent.firstChild) {
-        schemaContent.removeChild(schemaContent.firstChild);
-    }
-
-    for (const modelName in content.definitions) {
-        const definition = content.definitions[modelName];
-
-        const section = document.createElement('section');
-
-        const title = document.createElement('h1');
-        title.id = `/definitions/${modelName}`;
-        title.classList.add('title');
-        title.appendChild(document.createTextNode(modelName));
-        section.appendChild(title);
-
-        const description = document.createElement('p');
-        let desc = definition.longDescrription || definition.description || '';
-        description.appendChild(document.createTextNode(desc));
-        section.appendChild(description);
-
-        if (definition.properties) {
-            const table = createSchemaModelTable(modelName, definition.properties);
-            section.appendChild(table);
-        } else if (definition.enum) {
-            const table = createSchemaEnumTable(definition);
-            section.appendChild(table);
-        } else if (definition.anyOf) {
-            for (const elem of definition.anyOf) {
-                // TODO: `properties` only
-                if (elem.properties) {
-                    const table = createSchemaModelTable(modelName, elem.properties);
-                    section.appendChild(table);
-                    // TODO: first element only.
-                    break;
-                }
-            }
-        }
-
-        schemaContent.appendChild(section);
-    }
-}
-
-async function refreshSchemaVersion(): Promise<void> {
-    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
-    const versions = await getSchemaVersions(schemaBox.value);
-    const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
-
-    while (versionBox.firstChild) {
-        versionBox.removeChild(versionBox.firstChild);
-    }
-
-    for (const version of versions) {
-        const v = document.createElement('option');
-        v.text = version;
-        v.value = version;
-        versionBox.appendChild(v);
-    }
-}
-
 function resetCurrentPosition(schema: string) {
     console.log(`reset_current_position(${schema})`);
     const args = { 'schema': schema };
@@ -406,118 +55,676 @@ function search(keyword: string): Promise<unknown[]> {
     return invoke('search', args);
 }
 
-async function searchKeyword(keyword: string): Promise<void> {
-    searchPreKeyword = keyword;
-    let resources = await search(keyword);
-    searchTimer = null
-    clearSearchContent();
-    createSearchResultTable(resources);
-
-    const content = document.querySelector<HTMLDivElement>('div[name="search-content"]')!;
-    highlightKeyword(content, keyword);
-}
-
-function selectSchema(schema: string) {
-    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
-    const options = schemaBox.querySelectorAll<HTMLOptionElement>('option')!;
-    for (const option of options) {
-        if (option.value == schema) {
-            option.selected = true;
-        } else {
-            option.selected = false;
-        }
-    }
-}
-
-function selectVersion(version: string) {
-    const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
-    const options = versionBox.querySelectorAll<HTMLOptionElement>('option')!;
-    for (const option of options) {
-        if (option.value == version) {
-            option.selected = true;
-        } else {
-            option.selected = false;
-        }
-    }
-}
-
 function setSchemaPath(path: string) {
     console.log(`set_schema_path(${path})`);
     const args = { 'path': path };
     return invoke('set_schema_path', args);
 }
 
-async function setUpSchemas(schemas: string[]): Promise<void> {
-    const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
+@customElement('rsb-a')
+export class RsbAnchor extends LitElement {
 
-    for (const schema of schemas) {
-        const s = document.createElement('option');
-        s.text = schema;
-        s.value = schema;
-        schemaBox.appendChild(s);
+    static styles = globalStyles;
+
+    @property({type: String})
+    href: string = '';
+
+    @property({type: String})
+    text: string = '';
+
+    @property({type: String})
+    keyword: string = '';
+
+    render() {
+        let text: string | DirectiveResult<typeof UnsafeHTMLDirective> = this.text;
+        if (this.keyword) {
+            const regex = new RegExp(this.keyword, 'gi');
+            text = unsafeHTML((text as string).replace(regex, '<span class="keyword">$&</span>'));
+        }
+
+        return html`
+            <a href="${this.href}" title="${this.href}" @click="${this._click}">
+                ${text}
+            </a>
+        `;
     }
 
-    selectSchema('ServiceRoot');
+    private _click(e: Event) {
+        e.preventDefault();
 
-    await refreshSchemaVersion();
-    await refreshSchemaContent();
-    console.log('Initialized.');
+        let anchor = e.target as HTMLAnchorElement;
+        if (!(anchor instanceof HTMLAnchorElement)) {
+            anchor = (anchor as HTMLElement).closest('a') as HTMLAnchorElement;
+        }
+
+        if (anchor.hostname != 'localhost') {
+            this._linkToSchema(anchor);
+        } else {
+            const app = document.querySelector<RsbApp>('rsb-app')!;
+            const target = app.tables!.getSectionById(anchor.hash.slice(1));
+            if (target != null) {
+                target.scrollIntoView();
+            }
+        }
+    }
+
+    private async _linkToSchema(anchor: HTMLAnchorElement): Promise<void> {
+        const model = await getSchemaByUrl(anchor.href) as any;
+
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        await app.updateContent(model);
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing.');
+@customElement('rsb-search-table')
+export class RsbSearchTable extends LitElement {
 
-    const searchButton = document.querySelector<HTMLButtonElement>('button[name="search"]')!;
-    searchButton.addEventListener('click', openSearchModal);
+    static styles = globalStyles;
 
-    const searchCloseButton = document.querySelector<HTMLDivElement>('div[name="search"] button.delete')!;
-    searchCloseButton.addEventListener('click', closeSearchModal);
+    @property({type: Array})
+    resources: any[] = [];
 
-    const searchKeywordInput = document.querySelector<HTMLInputElement>('div[name="search"] input[name="keyword"]')!;
-    searchKeywordInput.addEventListener('keyup', function(e) {
+    render() {
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        const regex = new RegExp(app.searcher.keyword as string, 'gi');
+
+        const rows = [];
+
+        for (const resource of this.resources) {
+            for (const property of resource.properties) {
+                const name = `${resource.name}.json#/definitions/${resource.model}.${property.name}`;
+                const url = `http://redfish.dmtf.org/schemas/v1/${name}`
+
+                let value: string | DirectiveResult<typeof UnsafeHTMLDirective> = '';
+                if (property.value) {
+                    value = property.value.content;
+                }
+
+                if (app.searcher.keyword) {
+                    value = unsafeHTML((value as string).replace(regex, '<span class="keyword">$&</span>'));
+                }
+
+                // TODO: clear breadcrumbs.
+
+                rows.push(html`
+                    <tr>
+                        <td><rsb-a text="${name}" href="${url}" keyword="${app.searcher.keyword}" @click="${this.closeSearchModal}"></rsb-a></td>
+                        <td>${value}</td>
+                    </tr>
+                `);
+            }
+        }
+
+        return html`
+            <table class="table is-fullwidth is-hoverable">
+                ${rows}
+            </table>
+        `;
+    }
+
+    closeSearchModal() {
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        app.searcher.close();
+    }
+}
+
+@customElement('rsb-schema-enum-table')
+export class RsbSchemaEnumTable extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: Object})
+    definition: any = null;
+
+    render() {
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        const regex = new RegExp(app.searcher.keyword as string, 'gi');
+
+        const rows = [];
+
+        for (const value of this.definition.enum) {
+            let v = value;
+
+            const longDescription = this.definition.enumLongDescriptions && this.definition.enumLongDescriptions[value];
+            const description = this.definition.enumDescriptions && this.definition.enumDescriptions[value];
+            let descText = longDescription || description || '';
+
+            if (app.searcher.keyword) {
+                v = unsafeHTML(v.replace(regex, '<span class="keyword">$&</span>'));
+                descText = unsafeHTML(descText.replace(regex, '<span class="keyword">$&</span>'));
+            }
+
+            const versionAdded = this.definition.enumVersionAdded && this.definition.enumVersionAdded[value];
+            const verAddText = versionAdded || '';
+
+            const typeText = this.definition.type || '';
+
+            rows.push(html`
+                <tr>
+                    <td>${v}</td>
+                    <td>${descText}</td>
+                    <td>${verAddText}</td>
+                    <td>${typeText}</td>
+                </tr>
+            `);
+        }
+
+        return html`
+            <table class="table is-fullwidth is-hoverable">
+                <thead>
+                    <tr>
+                        <th>value</th>
+                        <th>description</th>
+                        <th>version added</th>
+                        <th>type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+    }
+}
+
+@customElement('rsb-schema-model-table')
+export class RsbSchemaModelTable extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: String})
+    modelName: string = '';
+
+    @property({type: Array})
+    properties: any = null;
+
+    render() {
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        const regex = new RegExp(app.searcher.keyword as string, 'gi');
+
+        const rows = [];
+
+        for (const name in this.properties) {
+            const property = this.properties[name];
+
+            let href = property['$ref'];
+            if (!href) {
+                if (property.items) {
+                    href = property.items['$ref'];
+                } else if (property.anyOf) {
+                    for (const i of property.anyOf) {
+                        href = i['$ref'];
+                        if (href) {
+                            // TODO: first element only.
+                            break;
+                        }
+                    }
+                }
+            }
+
+            let value = href ?
+                html`<rsb-a text="${name}" href="${href}" keyword="${app.searcher.keyword}"></rsb-a>` :
+                app.searcher.keyword ?
+                unsafeHTML(name.replace(regex, '<span class="keyword">$&</span>')) :
+                html`${name}`;
+
+            let descText = property.longDescription || property.description || '';
+
+            const verAddText = property.versionAdded || '';
+
+            const typeText = property.type || '';
+
+            const id = `/definitions/${this.modelName}.${name}`
+
+            if (app.searcher.keyword) {
+                descText = unsafeHTML(descText.replace(regex, '<span class="keyword">$&</span>'));
+            }
+
+            rows.push(html`
+                <tr id="${id}">
+                    <td>${value}</td>
+                    <td>${descText}</td>
+                    <td>${verAddText}</td>
+                    <td>${typeText}</td>
+                </tr>
+            `);
+        }
+
+        return html`
+            <table class="table is-fullwidth is-hoverable">
+                <thead>
+                    <tr>
+                        <th>property name</th>
+                        <th>description</th>
+                        <th>version added</th>
+                        <th>type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;        
+    }
+
+    getRowById(id: string): HTMLElement | null {
+        return (this.renderRoot as ShadowRoot)!.getElementById(id);
+    }
+}
+
+@customElement('rsb-schema-tables')
+export class RsbSchemaTables extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: Array})
+    definitions: any[] = [];
+
+    render() {
+        const sections = [];
+
+        for (const modelName in this.definitions) {
+            const definition = this.definitions[modelName];
+
+            const desc = definition.longDescrription || definition.description || '';
+
+            let table = null;
+            if (definition.properties) {
+                table = html`<rsb-schema-model-table .modelName="${modelName}" .properties="${definition.properties}" />`
+            } else if (definition.enum) {
+                table = html`<rsb-schema-enum-table .definition="${definition}" />`
+            } else if (definition.anyOf) {
+                for (const elem of definition.anyOf) {
+                    // TODO: `properties` only
+                    if (elem.properties) {
+                        table = html`<rsb-schema-model-table .modelName="${modelName}" .properties="${elem.properties}" />`
+                        // TODO: first element only.
+                        break;
+                    }
+                }
+            }
+
+            sections.push(html`
+                <section>
+                    <h1 id="/definitions/${modelName}" class="title">${modelName}</h1>
+                    <p>${desc}</p>
+                    ${table}
+                </section>
+            `);
+        }
+
+        return html`${sections}`;
+    }
+
+    async updateTables(content: any): Promise<void> {
+        this.definitions = content.definitions;
+        await this.getUpdateComplete();
+    }
+
+    getSectionById(id: string): HTMLElement | null {
+        let elem = (this.renderRoot as ShadowRoot)!.getElementById(id);
+        if (elem != null) {
+            return elem;
+        }
+
+        for (const model of this.renderRoot.querySelectorAll<RsbSchemaModelTable>('rsb-schema-model-table')) {
+            elem = model.getRowById(id);
+            if (elem != null) {
+                return elem;
+            }
+        }
+
+        return null;
+    }
+}
+
+@customElement('rsb-breadcrumb')
+export class RsbBreadcrumb extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: Array})
+    models: any[] = [];
+
+    render() {
+        const items = []
+
+        for (const model of this.models) {
+            items.push(html`
+                <li>
+                    <rsb-a text="${model.resource}" href="${model.link}">
+                        ${model.resource}
+                    </rsb-a>
+                </li>
+            `);
+        }
+
+        return html`
+            <nav class="breadcrumb" aria-label="breadcrumbs">
+                <ul>${items}</ul>
+            </nav>
+        `;
+    }
+
+    async refresh(): Promise<void> {
+        const models = await getCurrentPosition() as any;
+        this.models = models;
+        await this.getUpdateComplete();
+    }
+}
+
+@customElement('rsb-schema-selector')
+export class RsbSchemaSelector extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: Array})
+    schemas: string[] = [];
+
+    render() {
+        const items = []
+
+        for (const schema of this.schemas) {
+            items.push(html`
+                <option value="${schema}">${schema}</option>
+            `);
+        }
+
+        return html`
+            <div class="select">
+                <select @change="${this._changeValue}">
+                    ${items}
+                </select>
+            </div>
+        `;
+    }
+
+    getSchema(): string {
+        const select = this.renderRoot.querySelector<HTMLOptionElement>('select')!;
+        return select.value;
+    }
+
+    async refresh(): Promise<void> {
+        this.schemas = await getSchemas();
+        await this.getUpdateComplete();
+    }
+
+    setSchema(schema: string) {
+        const options = this.renderRoot.querySelectorAll<HTMLOptionElement>('option')!;
+        for (const option of options) {
+            if (option.value == schema) {
+                option.selected = true;
+            } else {
+                option.selected = false;
+            }
+        }
+    }
+
+    private async _changeValue() {
+        const select = this.renderRoot.querySelector<HTMLSelectElement>('select')!;
+        await resetCurrentPosition(select.value);
+
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        await app.versions.refresh();
+        await app.refresh();
+    }
+}
+
+@customElement('rsb-version-selector')
+export class RsbVersionSelector extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: Array})
+    versions: any[] = [];
+
+    render() {
+        const items = []
+
+        for (const version of this.versions) {
+            items.push(html`
+                <option value="${version}">${version}</option>
+            `);
+        }
+
+        return html`
+            <div class="select">
+                <select @change="${this._changeValue}">
+                    ${items}
+                </select>
+            </div>
+        `;
+    }
+
+    getVersion(): string {
+        const select = this.renderRoot.querySelector<HTMLOptionElement>('select')!;
+        return select.value;
+    }
+
+    async refresh(): Promise<void> {
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        const versions = await getSchemaVersions(app.schemas.getSchema());
+        await this.setVersions(versions);
+    }
+
+    setVersion(version: string) {
+        const options = this.renderRoot.querySelectorAll<HTMLOptionElement>('option')!;
+        for (const option of options) {
+            if (option.value == version) {
+                option.selected = true;
+            } else {
+                option.selected = false;
+            }
+        }
+    }
+
+    async setVersions(versons: any[]): Promise<void> {
+        this.versions = versons;
+        await this.getUpdateComplete();
+    }
+
+    private _changeValue() {
+        const app = document.querySelector<RsbApp>('rsb-app')!;
+        app.refresh()
+    }
+}
+
+@customElement('rsb-keyword-searcher')
+export class RsbKeywordSearcher extends LitElement {
+
+    static styles = globalStyles;
+
+    @property({type: String})
+    keyword: string | null = '';
+
+    searchTimer: (number | null) = null;
+
+    render() {
+        return html`
+            <button class="button" @click="${this.open}">Search</button>
+            <!-- search keyword -->
+            <div class="modal">
+              <div class="modal-background"></div>
+              <div class="modal-card">
+                <header class="modal-card-head">
+                  <p class="modal-card-title">Search</p>
+                  <button class="delete" aria-label="close" @click="${this.close}"></button>
+                </header>
+                <section class="modal-card-body">
+                  <div class="field">
+                    <div class="control">
+                      <input name="keyword"
+                             type="text"
+                             class="input is-rounded"
+                             placeholder="keyword... (at least 3 cahr)"
+                             @keyup="${this.changeValue}" />
+                    </div>
+                  </div>
+                  <div name="search-content">
+                  </div>
+                </section>
+              </div>
+            </div>
+        `;
+    }
+
+    changeValue(e: Event) {
         e.stopPropagation();
 
         let keyword = (e.target as HTMLInputElement)!.value;
-        if (searchPreKeyword == keyword) {
+        if (this.keyword == keyword) {
             return;
         } else if (keyword.length < 3) {
-            searchPreKeyword = null;
-            clearSearchContent();
+            this.search(null);
             return;
         }
 
-        if (searchTimer) {
-            clearTimeout(searchTimer);
+        if (this.searchTimer) {
+            clearTimeout(this.searchTimer);
         }
 
-        searchTimer = setTimeout(function () { searchKeyword(keyword); }, 300);
-    });
+        this.searchTimer = setTimeout(() => {
+            this.searchTimer = null
+            this.search(keyword);
+        }, 300);
+    }
 
-    getSchemas().then(function(schemas: string[]) {
-        const schemaBox = document.querySelector<HTMLSelectElement>('select[name="schema-name"]')!;
-        schemaBox.addEventListener('change', function(e) {
-            resetCurrentPosition((e.target as HTMLSelectElement)!.value)
-                .then(refreshSchemaVersion)
-                .then(_ => refreshSchemaContent());
-        });
+    clear() {
+        const content = this.renderRoot.querySelector<HTMLDivElement>('div[name="search-content"]')!;
 
-        const versionBox = document.querySelector<HTMLSelectElement>('select[name="schema-version"]')!;
-        versionBox.addEventListener('change', function() {
-            refreshSchemaContent();
-        });
-
-        if (schemas.length > 0) {
-            setUpSchemas(schemas);
-            return;
+        while(content.firstChild) {
+            content.removeChild(content.firstChild);
         }
+    }
 
-        const selectDirectory = document.querySelector<HTMLInputElement>('input[name="schema-select"]')!;
-        selectDirectory.addEventListener('click', function(e) {
-            e.preventDefault();
+    close() {
+        console.log('close search modal');
+        const modal = this.renderRoot.querySelector<HTMLDivElement>('div.modal')!;
+        modal.classList.remove('is-active');        
+    }
 
-            openDirectorySelector();
-        });
+    open() {
+        console.log('open search modal');
+        const modal = this.renderRoot.querySelector<HTMLDivElement>('div.modal')!;
+        modal.classList.add('is-active');
 
-        console.log('Pending.');
-    });
-});
+        const searchKeywordInput = modal.querySelector<HTMLInputElement>('input[name="keyword"]')!;
+        searchKeywordInput.focus();
+    }
+
+    async search(keyword: string | null): Promise<void> {
+        this.keyword = keyword;
+        this.clear();
+
+        if (keyword) {
+            let resources = await search(keyword);
+
+            const table = document.createElement('rsb-search-table') as RsbSearchTable;
+            table.resources = resources;
+
+            const content = this.renderRoot.querySelector<HTMLDivElement>('div[name="search-content"]')!;
+            content.appendChild(table);
+        }
+    }
+}
+
+@customElement('rsb-app')
+export class RsbApp extends LitElement {
+
+    static styles = globalStyles;
+
+    @query('rsb-breadcrumb')
+    breadcrumb!: RsbBreadcrumb;
+
+    @query('rsb-schema-selector')
+    schemas!: RsbSchemaSelector;
+
+    @query('rsb-version-selector')
+    versions!: RsbVersionSelector;
+
+    @query('rsb-keyword-searcher')
+    searcher!: RsbKeywordSearcher;
+
+    @query('rsb-schema-tables')
+    tables!: RsbSchemaTables | null;
+
+    render() {
+        return html`
+            <rsb-breadcrumb></rsb-breadcrumb>
+            <div class="field level">
+              <div class="level-left">
+                <div class="control level-item">
+                  <rsb-schema-selector></rsb-schema-selector>
+                </div>
+                <div class="control level-item">
+                  <rsb-version-selector></rsb-version-selector>
+                </div>
+              </div>
+              <div class="level-right">
+                <div class="control level-item">
+                  <rsb-keyword-searcher></rsb-keyword-searcher>
+                </div>
+              </div>
+            </div>
+            <div>
+                <rsb-schema-tables />
+            </div>
+            <div class="file">
+              <label class="file-label">
+                <input class="file-input" type="file" @click="${this._openDialog}" />
+                <span class="file-cta">
+                  <span class="file-label">
+                    Choose a json schema directory.
+                  </span>
+                </span>
+              </label>
+            </div>
+        `;
+    }
+
+    async refresh(anchor?: string): Promise<void> {
+        const content = await getSchemaContent(this.schemas.getSchema(), this.versions.getVersion());
+
+        await this.breadcrumb.refresh();
+
+        await this.tables!.updateTables(content);
+
+        (this.renderRoot.querySelector('div.file')! as HTMLElement).style.display = 'none';
+
+        const linkTo = anchor || `/definitions/${this.schemas.getSchema()}`
+        const target = this.tables!.getSectionById(linkTo);
+        if (target != null) {
+            target.scrollIntoView();
+        }
+    }
+
+    async updateContent(model: any): Promise<void> {
+        this.schemas.setSchema(model.resource);
+
+        await this.versions.refresh();
+        this.versions.setVersion(model.version);
+
+        await this.refresh(model.fragment);
+    }
+
+    private async _openDialog(e: Event): Promise<void> {
+        e.preventDefault();
+
+        const args = {
+            directory: true,
+            title: 'Select json schema directory'
+        };
+        const path = await open(args);
+
+        await setSchemaPath(path as string);
+        await this.performUpdate();
+        await this.getUpdateComplete();
+
+        await this.schemas.refresh();
+        this.schemas.setSchema('ServiceRoot');
+
+        await this.versions.refresh();
+
+        await this.refresh()
+    }
+}
