@@ -28,8 +28,7 @@ impl Model {
         let mut versions = self
             .versions
             .iter()
-            .filter(|v| v.name.is_some())
-            .map(|v| v.name.as_ref().unwrap())
+            .filter_map(|v| v.name.as_ref())
             .collect::<Vec<&Version>>();
         versions.sort_by(|a, b| b.cmp(a));
         match versions.first() {
@@ -297,8 +296,7 @@ fn get_schema_versions(schema: String) -> Result<Vec<String>, String> {
     let mut versions = model
         .versions
         .iter()
-        .filter(|v| v.name.is_some())
-        .map(|v| v.name.as_ref().unwrap())
+        .filter_map(|v| v.name.as_ref())
         .collect::<Vec<&Version>>();
     versions.sort_by(|a, b| b.cmp(a));
     Ok(versions.iter().map(|v| v.to_string()).collect())
@@ -325,8 +323,7 @@ fn set_schema_path(path: String) {
 fn get_schema_files(dir: &str) -> Vec<PathBuf> {
     let entries = fs::read_dir(dir).unwrap();
     entries
-        .filter(|e| e.is_ok())
-        .map(|e| e.unwrap())
+        .filter_map(|e| e.ok())
         .filter(|e| e.file_type().unwrap().is_file())
         .map(|e| e.path())
         .collect()
