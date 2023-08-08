@@ -1,16 +1,16 @@
 body {
-    margin: 5px;
+  margin: 5px;
 }
 
 h1 {
-    background-color: darkseagreen;
+  background-color: darkseagreen;
 }
 
 div.modal-card {
-    width: 90%;
-    height: 90%;
+  width: 90%;
+  height: 90%;
 }
 
 span.keyword {
-    background-color: yellow;;
+  background-color: yellow;
 }
