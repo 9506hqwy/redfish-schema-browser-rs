@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [ main ]
-    tags-ignore: [ '*' ]
+    tags-ignore: [ '**' ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,15 +19,44 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Install dependencies
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt update
-        sudo apt install -y libwebkit2gtk-4.0-dev build-essential curl wget libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+        sudo apt install -y \
+            libwebkit2gtk-4.0-dev \
+            build-essential \
+            curl \
+            wget \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
     - name: Install npm modules
       run: npm install
+
     - name: Create Artifacts
       run: npm run tauri build -- --debug
+
+    - name: Check format (Javascript)
+      if: matrix.os == 'ubuntu-latest'
+      run: npm run format -- --list-different src/index.css src/index.ts src/type.d.ts index.html
+
+    - name: Check format (Rust)
+      if: matrix.os == 'ubuntu-latest'
+      run: cargo fmt --all --check
+      working-directory: ./src-tauri
+
+    - name: Check lint (Rust)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cargo clippy --fix
+        git diff --exit-code --quiet
+      working-directory: ./src-tauri
+
     - name: Create Archive (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -35,6 +64,7 @@ jobs:
         tar -C ./src-tauri/target/debug/ -zcf rsb-${RUST_TARGET}.tar.gz redfish-schema-browser
         echo "RUST_TARGET=${RUST_TARGET}" >> $GITHUB_ENV
         echo "ARTIFACT_PATH=rsb-${RUST_TARGET}.tar.gz" >> $GITHUB_ENV
+
     - name: Create Archive (Windows)
       if: matrix.os == 'windows-latest'
       run: |
@@ -47,6 +77,7 @@ jobs:
         Compress-Archive -Path 'src-tauri\target\debug\redfish-schema-browser.exe' -DestinationPath "rsb-${RUST_TARGET}.zip"
         Write-Output "RUST_TARGET=$RUST_TARGET" >> $env:GITHUB_ENV
         Write-Output "ARTIFACT_PATH=rsb-${RUST_TARGET}.zip" >> $env:GITHUB_ENV
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:

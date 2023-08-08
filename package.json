@@ -4,7 +4,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "format": "prettier"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.4.0",
@@ -12,6 +13,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.4.0",
+    "prettier": "3.0.1",
     "typescript": "^5.1.6",
     "vite": "^4.4.8"
   }
