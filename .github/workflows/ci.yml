@@ -47,15 +47,15 @@ jobs:
       run: cargo fmt --all --check
       working-directory: ./src-tauri
 
+    - name: Prepare build (Rust)
+      run: mkdir dist
+
     - name: Check lint (Rust)
       if: matrix.os == 'ubuntu-latest'
       run: |
         cargo clippy --fix
         git diff --exit-code --quiet
       working-directory: ./src-tauri
-
-    - name: Prepare tests
-      run: mkdir dist
 
     - name: Run tests
       env:
