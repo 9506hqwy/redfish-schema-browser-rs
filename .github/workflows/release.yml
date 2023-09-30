@@ -17,7 +17,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       if: matrix.os == 'ubuntu-latest'
@@ -44,23 +44,47 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         RUST_TARGET=`rustup show active-toolchain | sed -e 's/[^-]*-\(.*\)\s.*/\1/'`
-        tar -C ./src-tauri/target/release/ -zcf rsb-${GITHUB_REF_NAME}-${RUST_TARGET}.tar.gz redfish-schema-browser
+
+        mkdir artifacts
+
+        CUR_DIR=$(pwd)
+        LIB_DIR='./target/release'
+        pushd "$LIB_DIR"
+        FILES=$(find . -maxdepth 1 -type f \( -name '*.so' -o -name '*.a' -o -executable \))
+        if [[ -n $FILES ]] ; then
+            tar -zcf "${CUR_DIR}/artifacts/${RUST_TARGET}.tar.gz" $FILES
+        fi
+        popd
+
         echo "RUST_TARGET=${RUST_TARGET}" >> $GITHUB_ENV
-        echo "ARTIFACT_PATH=rsb-${GITHUB_REF_NAME}-${RUST_TARGET}.tar.gz" >> $GITHUB_ENV
+      working-directory: ./src-tauri
 
     - name: Create Archive (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         $RUST_TARGET = $(rustup show active-toolchain) -replace '[^-]*-(?<host>.*)\s.*', '${host}'
-        Compress-Archive -Path 'src-tauri\target\release\redfish-schema-browser.exe' -DestinationPath "rsb-${env:GITHUB_REF_NAME}-${RUST_TARGET}.zip"
+
+        New-Item -Type Directory artifacts
+
+        $TARGETS = @(
+          'target\release\*.exe',
+          'target\release\*.dll',
+          'target\release\*.exp',
+          'target\release\*.lib'
+        )
+        $LIBS = @(Get-Item -Path $TARGETS)
+        if ($LIBS.Length -gt 0) {
+            Compress-Archive -Path $LIBS -DestinationPath ".\artifacts\${RUST_TARGET}.zip"
+        }
+
         Write-Output "RUST_TARGET=$RUST_TARGET" >> $env:GITHUB_ENV
-        Write-Output "ARTIFACT_PATH=rsb-${env:GITHUB_REF_NAME}-${RUST_TARGET}.zip" >> $env:GITHUB_ENV
+      working-directory: ./src-tauri
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
         name: ${{ env.RUST_TARGET }}
-        path: ${{ env.ARTIFACT_PATH }}
+        path: src-tauri/artifacts/
         retention-days: 1
 
   release:
@@ -70,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - uses: actions/download-artifact@v3
       with:
