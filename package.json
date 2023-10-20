@@ -12,7 +12,7 @@
     "lit": "^3.0.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.2",
+    "@tauri-apps/cli": "^1.5.5",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2",
     "vite": "^4.4.11"
