@@ -19,7 +19,7 @@ regex = "1.10.2"
 serde_json = "1.0.107"
 serde = { version = "1.0.190", features = ["derive"] }
 tauri = { version = "1.5.2", features = ["cli", "dialog-open"] }
-url = "2.4.1"
+url = "2.5.0"
 
 [features]
 default = [ "custom-protocol" ]
