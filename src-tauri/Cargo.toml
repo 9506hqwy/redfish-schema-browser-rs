@@ -11,7 +11,7 @@ categories = ["development-tools"]
 default-run = "app"
 
 [build-dependencies]
-tauri-build = { version = "1.5.0", features = [] }
+tauri-build = { version = "1.5.1", features = [] }
 
 [dependencies]
 once_cell = "1.18.0"
