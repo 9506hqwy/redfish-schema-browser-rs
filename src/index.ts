@@ -284,8 +284,8 @@ export class RsbSchemaModelTable extends LitElement {
             keyword="${app.searcher.keyword}"
           ></rsb-a>`
         : app.searcher.keyword
-        ? unsafeHTML(name.replace(regex, '<span class="keyword">$&</span>'))
-        : html`${name}`;
+          ? unsafeHTML(name.replace(regex, '<span class="keyword">$&</span>'))
+          : html`${name}`;
 
       let descText = property.longDescription || property.description || "";
 
