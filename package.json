@@ -8,13 +8,13 @@
     "format": "prettier"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.5.1",
-    "lit": "^3.0.0"
+    "@tauri-apps/api": "^1.5.3",
+    "lit": "^3.1.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.6",
-    "prettier": "^3.0.3",
-    "typescript": "^5.2.2",
+    "@tauri-apps/cli": "^1.5.9",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
     "vite": "^4.5.1"
   }
 }
