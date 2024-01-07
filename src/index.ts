@@ -6,8 +6,8 @@ import { DirectiveResult } from "lit/directive.js";
 import { unsafeHTML, UnsafeHTMLDirective } from "lit/directives/unsafe-html.js";
 import "./bulma.min.css";
 import "./index.css";
-import bulmaStyles from "./bulma.min.css";
-import indexStyles from "./index.css";
+import bulmaStyles from "./bulma.min.css?inline";
+import indexStyles from "./index.css?inline";
 
 const globalStyles = [unsafeCSS(bulmaStyles), unsafeCSS(indexStyles)];
 
