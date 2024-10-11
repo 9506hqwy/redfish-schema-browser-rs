@@ -8,7 +8,7 @@
     "format": "prettier"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.6.0",
+    "@tauri-apps/api": "^2.0.2",
     "lit": "^3.2.0"
   },
   "devDependencies": {
