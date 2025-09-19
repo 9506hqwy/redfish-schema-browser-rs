@@ -1,5 +1,5 @@
-import { open } from "@tauri-apps/api/dialog";
-import { invoke } from "@tauri-apps/api/tauri";
+import { open } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
 import { LitElement, html, unsafeCSS } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { DirectiveResult } from "lit/directive.js";

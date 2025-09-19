@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::ToString;
 use std::sync::Mutex;
+use tauri_plugin_cli::CliExt;
 
 static SCHEMA_MODELS: Lazy<Mutex<Vec<Model>>> = Lazy::new(|| Mutex::new(vec![]));
 
@@ -182,8 +183,10 @@ impl Default for CurrentPosition {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_cli::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let m = app.get_cli_matches()?;
+            let m = app.cli().matches()?;
 
             if let Some(schemadir) = m.args.get("schemadir") {
                 if let Some(path) = schemadir.value.as_str() {

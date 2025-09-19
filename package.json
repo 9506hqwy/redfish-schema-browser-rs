@@ -8,11 +8,12 @@
     "format": "prettier"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.6.0",
+    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
     "lit": "^3.3.1"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.6.3",
+    "@tauri-apps/cli": "^2.8.4",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
     "vite": "^7.1.6"
