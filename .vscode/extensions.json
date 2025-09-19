@@ -1,10 +1,13 @@
 {
     "recommendations": [
+        "davidanson.vscode-markdownlint",
         "editorconfig.editorconfig",
         "esbenp.prettier-vscode",
-        "ms-vscode-remote.remote-containers",
+        "github.vscode-github-actions",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
-        "vadimcn.vscode-lldb"
+        "timonwong.shellcheck",
+        "vadimcn.vscode-lldb",
+        "yzhang.markdown-all-in-one"
     ]
 }

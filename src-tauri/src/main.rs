@@ -95,19 +95,19 @@ impl FromStr for Version {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut v = s.strip_prefix('v').unwrap_or(s).split(&['_', '.']);
 
-        let major = v.next().ok_or(format!("Not found major version: {}", s))?;
-        let minor = v.next().ok_or(format!("Not found minor version: {}", s))?;
-        let patch = v.next().ok_or(format!("Not found patch version: {}", s))?;
+        let major = v.next().ok_or(format!("Not found major version: {s}"))?;
+        let minor = v.next().ok_or(format!("Not found minor version: {s}"))?;
+        let patch = v.next().ok_or(format!("Not found patch version: {s}"))?;
 
         let major = major
             .parse()
-            .map_err(|_| format!("Invalid numner: {}", major))?;
+            .map_err(|_| format!("Invalid numner: {major}"))?;
         let minor = minor
             .parse()
-            .map_err(|_| format!("Invalid numner: {}", minor))?;
+            .map_err(|_| format!("Invalid numner: {minor}"))?;
         let patch = patch
             .parse()
-            .map_err(|_| format!("Invalid numner: {}", patch))?;
+            .map_err(|_| format!("Invalid numner: {patch}"))?;
 
         Ok(Version {
             major,
@@ -133,7 +133,7 @@ struct RedfishModel {
 
 impl RedfishModel {
     fn from_resource(resource: &str) -> Self {
-        let link = format!("http://redfish.dmtf.org/schemas/v1/{}.json", resource);
+        let link = format!("http://redfish.dmtf.org/schemas/v1/{resource}.json");
         let resource = resource.to_string();
         let version = "".to_string();
         let fragment = "".to_string();
@@ -231,7 +231,7 @@ fn get_schema_by_url(
 ) -> Result<RedfishModel, String> {
     const PREFIX: &str = "/schemas/v1/";
 
-    let link_url = url::Url::parse(&link).map_err(|_| format!("Invalid: {}", link))?;
+    let link_url = url::Url::parse(&link).map_err(|_| format!("Invalid: {link}"))?;
     let path = link_url.path();
 
     if !path.starts_with(PREFIX) {
@@ -273,7 +273,7 @@ fn get_schema_content(schema: String, version: String) -> Result<String, String>
     let model = models
         .iter()
         .find(|m| m.resource == schema)
-        .ok_or(format!("Not found: {}", schema))?;
+        .ok_or(format!("Not found: {schema}"))?;
     let version = match model.find_version(&version) {
         Some(m) => m,
         _ => model.find_default_version(),
@@ -292,7 +292,7 @@ fn get_schema_versions(schema: String) -> Result<Vec<String>, String> {
     let model = models
         .iter()
         .find(|m| m.resource == schema)
-        .ok_or(format!("Not found: {}", schema))?;
+        .ok_or(format!("Not found: {schema}"))?;
     let mut versions = model
         .versions
         .iter()
@@ -311,7 +311,7 @@ fn reset_current_position(schema: String, pos: tauri::State<CurrentPosition>) {
 
 #[tauri::command]
 fn search(keyword: &str) -> Result<Vec<SearchResourceResult>, String> {
-    let regex = Regex::new(&format!("(?i){}", keyword)).unwrap();
+    let regex = Regex::new(&format!("(?i){keyword}")).unwrap();
     search_by_keyword(&regex)
 }
 
@@ -450,7 +450,7 @@ fn setup_models(dir: &str) {
             None
         } else {
             let v = get_schema_version(file_name);
-            Some(Version::from_str(&v).unwrap_or_else(|_| panic!("Invalid: {}", file_name)))
+            Some(Version::from_str(&v).unwrap_or_else(|_| panic!("Invalid: {file_name}")))
         };
         let v = ModelVersion {
             name,
