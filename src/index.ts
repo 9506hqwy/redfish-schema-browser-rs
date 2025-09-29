@@ -1,9 +1,12 @@
-import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import { LitElement, html, unsafeCSS } from "lit";
+import { open } from "@tauri-apps/plugin-dialog";
+import { html, LitElement, unsafeCSS } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
-import { DirectiveResult } from "lit/directive.js";
-import { unsafeHTML, UnsafeHTMLDirective } from "lit/directives/unsafe-html.js";
+import type { DirectiveResult } from "lit/directive.js";
+import {
+  type UnsafeHTMLDirective,
+  unsafeHTML,
+} from "lit/directives/unsafe-html.js";
 import "./bulma.min.css";
 import "./index.css";
 import bulmaStyles from "./bulma.min.css?inline";
@@ -11,7 +14,30 @@ import indexStyles from "./index.css?inline";
 
 const globalStyles = [unsafeCSS(bulmaStyles), unsafeCSS(indexStyles)];
 
-function getCurrentPosition(): Promise<unknown> {
+interface RedfishModel {
+  link: string;
+  resource: string;
+  version: string;
+  fragment: string;
+}
+
+interface SearchResourceResult {
+  name: string;
+  model: string;
+  properties: SearchPropertyResult[];
+}
+
+interface SearchPropertyResult {
+  name: string;
+  value?: SearchValueResult;
+}
+
+interface SearchValueResult {
+  name: string;
+  content: string;
+}
+
+function getCurrentPosition(): Promise<RedfishModel[]> {
   console.log("get_current_position");
   return invoke("get_current_position");
 }
@@ -21,7 +47,7 @@ function getSchemas(): Promise<string[]> {
   return invoke("get_schemas");
 }
 
-function getSchemaByUrl(link: string): Promise<unknown> {
+function getSchemaByUrl(link: string): Promise<RedfishModel> {
   console.log(`get_schema_by_url(${link})`);
   const args = { link: link };
   return invoke("get_schema_by_url", args);
@@ -33,8 +59,8 @@ async function getSchemaContent(
 ): Promise<unknown> {
   console.log(`get_schema_content(${schema}, ${version})`);
   const args = { schema: schema, version: version };
-  const content = await invoke("get_schema_content", args);
-  return JSON.parse(content as string);
+  const content: string = await invoke("get_schema_content", args);
+  return JSON.parse(content);
 }
 
 function getSchemaVersions(schema: string): Promise<string[]> {
@@ -49,7 +75,7 @@ function resetCurrentPosition(schema: string) {
   return invoke("reset_current_position", args);
 }
 
-function search(keyword: string): Promise<unknown[]> {
+function search(keyword: string): Promise<SearchResourceResult[]> {
   console.log(`search(${keyword})`);
   const args = { keyword: keyword };
   return invoke("search", args);
@@ -63,7 +89,7 @@ function setSchemaPath(path: string) {
 
 @customElement("rsb-a")
 export class RsbAnchor extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: String })
   href: string = "";
@@ -74,7 +100,7 @@ export class RsbAnchor extends LitElement {
   @property({ type: String })
   keyword: string = "";
 
-  render() {
+  override render() {
     let text: string | DirectiveResult<typeof UnsafeHTMLDirective> = this.text;
     if (this.keyword) {
       const regex = new RegExp(this.keyword, "gi");
@@ -98,7 +124,7 @@ export class RsbAnchor extends LitElement {
       anchor = (anchor as HTMLElement).closest("a") as HTMLAnchorElement;
     }
 
-    if (anchor.hostname != "localhost") {
+    if (anchor.hostname !== "localhost") {
       this._linkToSchema(anchor);
     } else {
       const app = document.querySelector<RsbApp>("rsb-app")!;
@@ -110,7 +136,7 @@ export class RsbAnchor extends LitElement {
   }
 
   private async _linkToSchema(anchor: HTMLAnchorElement): Promise<void> {
-    const model = (await getSchemaByUrl(anchor.href)) as any;
+    const model = await getSchemaByUrl(anchor.href);
 
     const app = document.querySelector<RsbApp>("rsb-app")!;
     await app.updateContent(model);
@@ -119,12 +145,12 @@ export class RsbAnchor extends LitElement {
 
 @customElement("rsb-search-table")
 export class RsbSearchTable extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: Array })
-  resources: any[] = [];
+  resources: SearchResourceResult[] = [];
 
-  render() {
+  override render() {
     const app = document.querySelector<RsbApp>("rsb-app")!;
     const regex = new RegExp(app.searcher.keyword as string, "gi");
 
@@ -179,12 +205,13 @@ export class RsbSearchTable extends LitElement {
 
 @customElement("rsb-schema-enum-table")
 export class RsbSchemaEnumTable extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: Object })
+  // biome-ignore lint/suspicious/noExplicitAny: multi json object
   definition: any = null;
 
-  render() {
+  override render() {
     const app = document.querySelector<RsbApp>("rsb-app")!;
     const regex = new RegExp(app.searcher.keyword as string, "gi");
 
@@ -193,12 +220,8 @@ export class RsbSchemaEnumTable extends LitElement {
     for (const value of this.definition.enum) {
       let v = value;
 
-      const longDescription =
-        this.definition.enumLongDescriptions &&
-        this.definition.enumLongDescriptions[value];
-      const description =
-        this.definition.enumDescriptions &&
-        this.definition.enumDescriptions[value];
+      const longDescription = this.definition.enumLongDescriptions?.[value];
+      const description = this.definition.enumDescriptions?.[value];
       let descText = longDescription || description || "";
 
       if (app.searcher.keyword) {
@@ -208,9 +231,7 @@ export class RsbSchemaEnumTable extends LitElement {
         );
       }
 
-      const versionAdded =
-        this.definition.enumVersionAdded &&
-        this.definition.enumVersionAdded[value];
+      const versionAdded = this.definition.enumVersionAdded?.[value];
       const verAddText = versionAdded || "";
 
       const typeText = this.definition.type || "";
@@ -245,15 +266,16 @@ export class RsbSchemaEnumTable extends LitElement {
 
 @customElement("rsb-schema-model-table")
 export class RsbSchemaModelTable extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: String })
   modelName: string = "";
 
   @property({ type: Array })
+  // biome-ignore lint/suspicious/noExplicitAny: multi json object
   properties: any = null;
 
-  render() {
+  override render() {
     const app = document.querySelector<RsbApp>("rsb-app")!;
     const regex = new RegExp(app.searcher.keyword as string, "gi");
 
@@ -262,13 +284,13 @@ export class RsbSchemaModelTable extends LitElement {
     for (const name in this.properties) {
       const property = this.properties[name];
 
-      let href = property["$ref"];
+      let href = property.$ref;
       if (!href) {
         if (property.items) {
-          href = property.items["$ref"];
+          href = property.items.$ref;
         } else if (property.anyOf) {
           for (const i of property.anyOf) {
-            href = i["$ref"];
+            href = i.$ref;
             if (href) {
               // TODO: first element only.
               break;
@@ -277,7 +299,7 @@ export class RsbSchemaModelTable extends LitElement {
         }
       }
 
-      let value = href
+      const value = href
         ? html`<rsb-a
             text="${name}"
             href="${href}"
@@ -335,12 +357,13 @@ export class RsbSchemaModelTable extends LitElement {
 
 @customElement("rsb-schema-tables")
 export class RsbSchemaTables extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: Array })
+  // biome-ignore lint/suspicious/noExplicitAny: multi json object
   definitions: any[] = [];
 
-  render() {
+  override render() {
     const sections = [];
 
     for (const modelName in this.definitions) {
@@ -382,6 +405,7 @@ export class RsbSchemaTables extends LitElement {
     return html`${sections}`;
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: multi json object
   async updateTables(content: any): Promise<void> {
     this.definitions = content.definitions;
     await this.getUpdateComplete();
@@ -408,12 +432,12 @@ export class RsbSchemaTables extends LitElement {
 
 @customElement("rsb-breadcrumb")
 export class RsbBreadcrumb extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: Array })
-  models: any[] = [];
+  models: RedfishModel[] = [];
 
-  render() {
+  override render() {
     const items = [];
 
     for (const model of this.models) {
@@ -436,7 +460,7 @@ export class RsbBreadcrumb extends LitElement {
   }
 
   async refresh(): Promise<void> {
-    const models = (await getCurrentPosition()) as any;
+    const models = await getCurrentPosition();
     this.models = models;
     await this.getUpdateComplete();
   }
@@ -444,12 +468,12 @@ export class RsbBreadcrumb extends LitElement {
 
 @customElement("rsb-schema-selector")
 export class RsbSchemaSelector extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: Array })
   schemas: string[] = [];
 
-  render() {
+  override render() {
     const items = [];
 
     for (const schema of this.schemas) {
@@ -479,7 +503,7 @@ export class RsbSchemaSelector extends LitElement {
     const options =
       this.renderRoot.querySelectorAll<HTMLOptionElement>("option")!;
     for (const option of options) {
-      if (option.value == schema) {
+      if (option.value === schema) {
         option.selected = true;
       } else {
         option.selected = false;
@@ -499,12 +523,13 @@ export class RsbSchemaSelector extends LitElement {
 
 @customElement("rsb-version-selector")
 export class RsbVersionSelector extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: Array })
+  // biome-ignore lint/suspicious/noExplicitAny: multi json object
   versions: any[] = [];
 
-  render() {
+  override render() {
     const items = [];
 
     for (const version of this.versions) {
@@ -535,7 +560,7 @@ export class RsbVersionSelector extends LitElement {
     const options =
       this.renderRoot.querySelectorAll<HTMLOptionElement>("option")!;
     for (const option of options) {
-      if (option.value == version) {
+      if (option.value === version) {
         option.selected = true;
       } else {
         option.selected = false;
@@ -543,6 +568,7 @@ export class RsbVersionSelector extends LitElement {
     }
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: multi json object
   async setVersions(versons: any[]): Promise<void> {
     this.versions = versons;
     await this.getUpdateComplete();
@@ -556,14 +582,14 @@ export class RsbVersionSelector extends LitElement {
 
 @customElement("rsb-keyword-searcher")
 export class RsbKeywordSearcher extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @property({ type: String })
   keyword: string | null = "";
 
   searchTimer: number | null = null;
 
-  render() {
+  override render() {
     return html`
       <button class="button" @click="${this.open}">Search</button>
       <!-- search keyword -->
@@ -600,8 +626,8 @@ export class RsbKeywordSearcher extends LitElement {
   changeValue(e: Event) {
     e.stopPropagation();
 
-    let keyword = (e.target as HTMLInputElement)!.value;
-    if (this.keyword == keyword) {
+    const keyword = (e.target as HTMLInputElement)!.value;
+    if (this.keyword === keyword) {
       return;
     } else if (keyword.length < 3) {
       this.search(null);
@@ -650,7 +676,7 @@ export class RsbKeywordSearcher extends LitElement {
     this.clear();
 
     if (keyword) {
-      let resources = await search(keyword);
+      const resources = await search(keyword);
 
       const table = document.createElement(
         "rsb-search-table",
@@ -667,7 +693,7 @@ export class RsbKeywordSearcher extends LitElement {
 
 @customElement("rsb-app")
 export class RsbApp extends LitElement {
-  static styles = globalStyles;
+  static override styles = globalStyles;
 
   @query("rsb-breadcrumb")
   breadcrumb!: RsbBreadcrumb;
@@ -684,7 +710,7 @@ export class RsbApp extends LitElement {
   @query("rsb-schema-tables")
   tables!: RsbSchemaTables | null;
 
-  render() {
+  override render() {
     return html`
       <rsb-breadcrumb></rsb-breadcrumb>
       <div class="field level">
@@ -736,7 +762,7 @@ export class RsbApp extends LitElement {
     }
   }
 
-  async updateContent(model: any): Promise<void> {
+  async updateContent(model: RedfishModel): Promise<void> {
     this.schemas.setSchema(model.resource);
 
     await this.versions.refresh();

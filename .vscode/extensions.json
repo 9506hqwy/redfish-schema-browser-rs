@@ -1,11 +1,12 @@
 {
     "recommendations": [
+        "biomejs.biome",
         "davidanson.vscode-markdownlint",
         "editorconfig.editorconfig",
-        "esbenp.prettier-vscode",
         "github.vscode-github-actions",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
+        "tauri-apps.tauri-vscode",
         "timonwong.shellcheck",
         "vadimcn.vscode-lldb",
         "yzhang.markdown-all-in-one"

@@ -1,47 +1,49 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
-  "build": {
-    "beforeBuildCommand": "npm run build",
-    "beforeDevCommand": "npm run dev",
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:3000"
-  },
-  "bundle": {
-    "active": false,
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
-  },
-  "productName": "redfish-schema-browser",
-  "mainBinaryName": "redfish-schema-browser",
-  "version": "0.2.0",
-  "identifier": "9506hqwy.redfish.schema.browser",
-  "plugins": {
-    "cli": {
-      "args": [
-        {
-          "name": "schemadir",
-          "index": 1,
-          "required": false,
-          "takesValue": true
+    "$schema": "https://schema.tauri.app/config/2",
+    "build": {
+        "beforeBuildCommand": "npm run build",
+        "beforeDevCommand": "npm run dev",
+        "devUrl": "http://localhost:1420",
+        "frontendDist": "../dist"
+    },
+    "bundle": {
+        "active": false,
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.ico"
+        ]
+    },
+    "productName": "redfish-schema-browser",
+    "version": "0.2.0",
+    "identifier": "9506hqwy.redfish.schema.browser",
+    "mainBinaryName": "redfish-schema-browser",
+    "plugins": {
+        "cli": {
+            "args": [
+                {
+                    "name": "schemadir",
+                    "index": 1,
+                    "required": false,
+                    "takesValue": true
+                }
+            ]
         }
-      ]
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Redfish Schema Browser",
+                "width": 1024,
+                "height": 768,
+                "fullscreen": false,
+                "resizable": true,
+                "maximizable": true
+            }
+        ],
+        "security": {
+            "csp": null
+        }
     }
-  },
-  "app": {
-    "windows": [
-      {
-        "fullscreen": false,
-        "height": 768,
-        "resizable": true,
-        "title": "Redfish Schema Browser",
-        "width": 1024,
-        "useHttpsScheme": true
-      }
-    ]
-  }
 }

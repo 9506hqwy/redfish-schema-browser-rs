@@ -1,13 +1,2 @@
 dist/
 node_modules/
-src-tauri/artifacts/
-src-tauri/coverage_html/
-src-tauri/gen/
-src-tauri/target/
-
-*~
-*.profraw
-
-Cargo.lock
-coverage.lcov
-default.profdata

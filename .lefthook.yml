@@ -1,0 +1,32 @@
+pre-commit:
+  jobs:
+    - name: Rust Format
+      glob: "*.rs"
+      run: cargo fmt --all --check
+      root: src-tauri
+
+    - name: Rust Lint
+      glob: "*.rs"
+      run: cargo clippy --all-targets -- -Dwarnings
+      root: src-tauri
+
+    - name: Rust Test
+      glob: "*.rs"
+      run: cargo test
+      root: src-tauri
+
+    - name: Js Format
+      glob:
+        - "*.js"
+        - "*.ts"
+      run: npm run format-check
+
+    - name: Js Lint
+      glob:
+        - "*.js"
+        - "*.ts"
+      run: npm run lint-check
+
+    - name: Actions Lint
+      glob: ".github/workflows/*.yml"
+      run: actionlint

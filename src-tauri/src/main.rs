@@ -6,6 +6,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Ord, Ordering, PartialEq, PartialOrd};
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -118,9 +119,9 @@ impl FromStr for Version {
     }
 }
 
-impl ToString for Version {
-    fn to_string(&self) -> String {
-        format!("v{}.{}.{}", self.major, self.minor, self.patch)
+impl fmt::Display for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "v{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 

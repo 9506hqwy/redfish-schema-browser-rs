@@ -1,2 +1,6 @@
-/target/
-WixTools
+artifacts/
+gen/schemas/
+target/
+
+memory-profiling*
+perf.data*

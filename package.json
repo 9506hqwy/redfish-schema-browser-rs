@@ -1,21 +1,27 @@
 {
-  "name": "redfish-schema-browser",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "format": "prettier"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^2.8.0",
-    "@tauri-apps/plugin-dialog": "^2.4.0",
-    "lit": "^3.3.1"
-  },
-  "devDependencies": {
-    "@tauri-apps/cli": "^2.8.4",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.6"
-  }
+    "name": "redfish-schema-browser",
+    "private": true,
+    "version": "0.2.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "tauri": "tauri",
+        "format": "biome format --write",
+        "format-check": "biome format",
+        "lint": "biome lint --write",
+        "lint-check": "biome lint --error-on-warnings"
+    },
+    "dependencies": {
+        "@tauri-apps/api": "^2.8.0",
+        "@tauri-apps/plugin-dialog": "^2.4.0",
+        "lit": "^3.3.1"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.2.4",
+        "@tauri-apps/cli": "^2.8.4",
+        "typescript": "~5.9.2",
+        "vite": "^7.1.7"
+    }
 }
