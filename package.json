@@ -14,7 +14,7 @@
         "lint-check": "biome lint --error-on-warnings"
     },
     "dependencies": {
-        "@tauri-apps/api": "^2.8.0",
+        "@tauri-apps/api": "^2.9.0",
         "@tauri-apps/plugin-dialog": "^2.4.0",
         "lit": "^3.3.1"
     },
