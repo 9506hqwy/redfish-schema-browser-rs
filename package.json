@@ -19,8 +19,8 @@
         "lit": "^3.3.2"
     },
     "devDependencies": {
-        "@biomejs/biome": "2.4.2",
-        "@tauri-apps/cli": "^2.10.0",
+        "@biomejs/biome": "2.4.6",
+        "@tauri-apps/cli": "^2.10.1",
         "typescript": "~5.9.3",
         "vite": "^7.3.1"
     }
