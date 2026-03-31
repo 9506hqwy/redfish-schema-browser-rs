@@ -7,8 +7,8 @@ import {
   type UnsafeHTMLDirective,
   unsafeHTML,
 } from "lit/directives/unsafe-html.js";
-import "./bulma.min.css";
-import "./index.css";
+import "./bulma.min.css?inline";
+import "./index.css?inline";
 import bulmaStyles from "./bulma.min.css?inline";
 import indexStyles from "./index.css?inline";
 
