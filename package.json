@@ -14,14 +14,14 @@
         "lint-check": "biome lint --error-on-warnings"
     },
     "dependencies": {
-        "@tauri-apps/api": "^2.10.1",
-        "@tauri-apps/plugin-dialog": "^2.7.0",
+        "@tauri-apps/api": "^2.11.0",
+        "@tauri-apps/plugin-dialog": "^2.7.1",
         "lit": "^3.3.2"
     },
     "devDependencies": {
-        "@biomejs/biome": "2.4.10",
-        "@tauri-apps/cli": "^2.10.1",
-        "typescript": "~6.0.2",
-        "vite": "^8.0.5"
+        "@biomejs/biome": "2.4.14",
+        "@tauri-apps/cli": "^2.11.0",
+        "typescript": "~6.0.3",
+        "vite": "^8.0.10"
     }
 }
