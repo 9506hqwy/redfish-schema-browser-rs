@@ -16,12 +16,12 @@
     "dependencies": {
         "@tauri-apps/api": "^2.11.0",
         "@tauri-apps/plugin-dialog": "^2.7.1",
-        "lit": "^3.3.2"
+        "lit": "^3.3.3"
     },
     "devDependencies": {
-        "@biomejs/biome": "2.4.14",
-        "@tauri-apps/cli": "^2.11.1",
+        "@biomejs/biome": "2.4.15",
+        "@tauri-apps/cli": "^2.11.2",
         "typescript": "~6.0.3",
-        "vite": "^8.0.10"
+        "vite": "^8.0.14"
     }
 }
