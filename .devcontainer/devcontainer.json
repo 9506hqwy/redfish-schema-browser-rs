@@ -3,15 +3,6 @@
     "name": "Rust",
     // Base Container Image.
     "image": "mcr.microsoft.com/devcontainers/rust:2-1-trixie",
-    // For running using Podman.
-    // https://github.com/microsoft/vscode-remote-release/issues/4443
-    "runArgs": [
-        "--userns=keep-id"
-    ],
-    "securityOpt": [
-        "label=disable",
-        "seccomp=unconfined"
-    ],
     // Add features.
     "features": {
         "ghcr.io/devcontainers/features/node:1": {}

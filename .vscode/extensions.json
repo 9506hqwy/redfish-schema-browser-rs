@@ -6,6 +6,7 @@
         "github.vscode-github-actions",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
+        "task.vscode-task",
         "tauri-apps.tauri-vscode",
         "timonwong.shellcheck",
         "vadimcn.vscode-lldb",

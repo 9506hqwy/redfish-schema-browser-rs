@@ -54,6 +54,9 @@ curl -fsSL -o - "https://github.com/evilmartians/lefthook/releases/download/${LE
     gzip -c -d > ~/.local/bin/lefthook
 chmod +x ~/.local/bin/lefthook
 
+# Install task
+sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+
 # Install yq
 YQ_URL="https://api.github.com/repos/mikefarah/yq/releases?per_page=1"
 YQ_VERSION=$(curl -fsSL -H "${GITHUB_HEADER_ACCEPT}" -H "${GITHUB_HEADER_VERSION}" "${YQ_URL}" | jq -r '.[0].tag_name')
@@ -64,11 +67,14 @@ chmod +x ~/.local/bin/yq
 # Install cargo-expand
 cargo install cargo-expand
 
-# Install cargo-outdated
-cargo install cargo-outdated
+# Install cargo-edit
+cargo install cargo-edit
 
 # Install CPU profiler.
 cargo install flamegraph
+
+# Incstall CycloneDX Rust Plugin
+cargo install cargo-cyclonedx
 
 # Install memory profiler.
 MEM_PKG=bytehound-x86_64-unknown-linux-gnu.tgz

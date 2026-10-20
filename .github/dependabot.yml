@@ -4,6 +4,8 @@ updates:
     directory: "/src-tauri"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -18,3 +20,5 @@ updates:
       - dependency-name: "vite"
         update-types:
           - "version-update:semver-patch"
+    cooldown:
+      default-days: 7

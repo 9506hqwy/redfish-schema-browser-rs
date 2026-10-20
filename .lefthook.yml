@@ -1,17 +1,26 @@
 pre-commit:
   jobs:
     - name: Rust Format
-      glob: "*.rs"
+      glob:
+        - "*.rs"
+        - "Cargo.lock"
+        - "Cargo.toml"
       run: cargo fmt --all --check
       root: src-tauri
 
     - name: Rust Lint
-      glob: "*.rs"
+      glob:
+        - "*.rs"
+        - "Cargo.lock"
+        - "Cargo.toml"
       run: cargo clippy --all-targets -- -Dwarnings
       root: src-tauri
 
     - name: Rust Test
-      glob: "*.rs"
+      glob:
+        - "*.rs"
+        - "Cargo.lock"
+        - "Cargo.toml"
       run: cargo test
       root: src-tauri
 
