@@ -3,7 +3,7 @@ name = "redfish-schema-browser-rs"
 version = "0.2.0"
 authors = ["9506hqwy"]
 # https://github.com/tauri-apps/tauri/issues/10412
-edition = "2021"
+edition = "2024"
 rust-version = "1.90"
 repository = "https://github.com/9506hqwy/redfish-schema-browser-rs"
 license = "MIT OR Apache-2.0"

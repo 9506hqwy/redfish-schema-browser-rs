@@ -189,10 +189,10 @@ fn main() {
         .setup(|app| {
             let m = app.cli().matches()?;
 
-            if let Some(schemadir) = m.args.get("schemadir") {
-                if let Some(path) = schemadir.value.as_str() {
-                    setup_models(path);
-                }
+            if let Some(schemadir) = m.args.get("schemadir")
+                && let Some(path) = schemadir.value.as_str()
+            {
+                setup_models(path);
             }
 
             Ok(())
@@ -354,22 +354,22 @@ fn match_definition(
 ) -> Vec<SearchPropertyResult> {
     let mut matches = vec![];
 
-    if let serde_json::value::Value::Object(definition) = definition {
-        if let Some(serde_json::value::Value::Object(properties)) = definition.get("properties") {
-            for (name, property) in properties {
-                if keyword.is_match(name) {
-                    matches.push(SearchPropertyResult {
-                        name: name.to_string(),
-                        value: None,
-                    });
-                }
+    if let serde_json::value::Value::Object(definition) = definition
+        && let Some(serde_json::value::Value::Object(properties)) = definition.get("properties")
+    {
+        for (name, property) in properties {
+            if keyword.is_match(name) {
+                matches.push(SearchPropertyResult {
+                    name: name.to_string(),
+                    value: None,
+                });
+            }
 
-                if let Some(m) = match_property(property, keyword) {
-                    matches.push(SearchPropertyResult {
-                        name: name.to_string(),
-                        value: Some(m),
-                    });
-                }
+            if let Some(m) = match_property(property, keyword) {
+                matches.push(SearchPropertyResult {
+                    name: name.to_string(),
+                    value: Some(m),
+                });
             }
         }
     }
@@ -382,22 +382,22 @@ fn match_property(
     keyword: &Regex,
 ) -> Option<SearchValueResult> {
     if let serde_json::value::Value::Object(property) = property {
-        if let Some(serde_json::value::Value::String(long_desc)) = property.get("longDescription") {
-            if keyword.is_match(long_desc) {
-                return Some(SearchValueResult {
-                    name: "longDescription".to_string(),
-                    content: long_desc.clone(),
-                });
-            }
+        if let Some(serde_json::value::Value::String(long_desc)) = property.get("longDescription")
+            && keyword.is_match(long_desc)
+        {
+            return Some(SearchValueResult {
+                name: "longDescription".to_string(),
+                content: long_desc.clone(),
+            });
         }
 
-        if let Some(serde_json::value::Value::String(desc)) = property.get("description") {
-            if keyword.is_match(desc) {
-                return Some(SearchValueResult {
-                    name: "description".to_string(),
-                    content: desc.clone(),
-                });
-            }
+        if let Some(serde_json::value::Value::String(desc)) = property.get("description")
+            && keyword.is_match(desc)
+        {
+            return Some(SearchValueResult {
+                name: "description".to_string(),
+                content: desc.clone(),
+            });
         }
     }
 
@@ -417,17 +417,17 @@ fn search_by_keyword(keyword: &Regex) -> Result<Vec<SearchResourceResult>, Strin
         let json =
             serde_json::de::from_str(&content).map_err(|_| "failed to deserialize".to_string())?;
 
-        if let serde_json::value::Value::Object(json) = json {
-            if let Some(serde_json::value::Value::Object(definitions)) = json.get("definitions") {
-                for (name, definition) in definitions {
-                    let m = match_definition(definition, keyword);
-                    if !m.is_empty() {
-                        matches.push(SearchResourceResult {
-                            name: model.resource.clone(),
-                            model: name.clone(),
-                            properties: m,
-                        });
-                    }
+        if let serde_json::value::Value::Object(json) = json
+            && let Some(serde_json::value::Value::Object(definitions)) = json.get("definitions")
+        {
+            for (name, definition) in definitions {
+                let m = match_definition(definition, keyword);
+                if !m.is_empty() {
+                    matches.push(SearchResourceResult {
+                        name: model.resource.clone(),
+                        model: name.clone(),
+                        properties: m,
+                    });
                 }
             }
         }
