@@ -28,13 +28,13 @@ pre-commit:
       glob:
         - "*.js"
         - "*.ts"
-      run: npm run format-check
+      run: bun run format-check
 
     - name: Js Lint
       glob:
         - "*.js"
         - "*.ts"
-      run: npm run lint-check
+      run: bun run lint-check
 
     - name: Actions Lint
       glob: ".github/workflows/*.yml"

@@ -89,6 +89,10 @@ rustup target add x86_64-pc-windows-gnu
 # Add the Linux target for musl.
 rustup target add x86_64-unknown-linux-musl
 
+# Install bun
+export BUN_INSTALL=~/.local
+curl -fsSL https://bun.com/install | bash
+
 # Install tauri.
 ## Intstall dependencies for Tauri.
 sudo apt-get install -y \
